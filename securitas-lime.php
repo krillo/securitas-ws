@@ -140,8 +140,20 @@ class SecuritasWS {
     $response = $this->lime->getPerson($personId);
     var_dump($response);
 
-
+    $portal = '';
+    $elegible = '';
+    $tech = '';
     foreach ($response as $value) {
+      if($value->attributes()->authorizedportal == 1){
+          $portal = ' checked ';
+      }
+      if($value->attributes()->authorizedarc == 1){
+          $elegible = ' checked ';
+      }        
+      if($value->attributes()->admninrights == 1){
+          $tech = ' checked ';
+      }        
+        
       $output = '<div id="list-staff">';
       $output .= '<ul>';
       $output .= '<li>';
@@ -175,15 +187,15 @@ class SecuritasWS {
       $output .= '<input type="text" class="email" value="' . $value->attributes()->email . '" id="email" name="email">';
       $output .= '</div>';
       $output .= '<div class="pp-wrap">';
-      $output .= '<input type="checkbox" value="forever" class="pp-check" name="tech">';
+      $output .= '<input type="checkbox" value="forever" class="pp-check" name="tech" '.$tech.'>';
       $output .= '<div class="pp-checkbox">Technical Administrator</div>';
       $output .= '</div>';
       $output .= '<div>';
-      $output .= '<input type="checkbox" value="forever" class="pp-check" name="elegible">';
+      $output .= '<input type="checkbox" value="forever" class="pp-check" name="elegible" '.$elegible.'>';
       $output .= '<div class="pp-checkbox">Elegible LC</div>';
       $output .= '</div>';
       $output .= '<div>';
-      $output .= '<input type="checkbox" value="forever" class="pp-check" name="portal">';
+      $output .= '<input type="checkbox" value="forever" class="pp-check" name="portal" '.$portal.'>';
       $output .= '<div class="pp-checkbox">Elegible Portal</div>';
       $output .= '</div>';
       $output .= '</div>';
