@@ -38,15 +38,6 @@ class SecuritasWS {
     } else {
       include_once 'LimeWService.php';
       $this->lime = new LimeWService($url);
-      //$response = $lime->databaseschema();
-      //$response = $lime->tableschema();
-      //$response = $lime->selectFromOffice(10);  //funkar
-      //$response = $lime->updateOffice();
-      //$response = $lime->updateCompany();
-      //$response = $lime->selectFromCompany(100);
-      //$response = $lime->selectFromPerson(10);
-      //$response = $lime->updatePerson();
-      //var_dump($response);
     }
   }
 
@@ -140,34 +131,82 @@ class SecuritasWS {
     $response = $this->lime->getPerson($personId);
     var_dump($response);
 
+    
+    $pluginRoot = plugins_url("", __FILE__);
+    $actionFile = $pluginRoot . "/api_lime_update_person.php";
+    echo '<script type="text/javascript">
+  jQuery(document).ready(function(){
+    jQuery("#save-person").click(function(event) {
+      event.preventDefault();
+      var self = jQuery(this);
+      var firstname = jQuery("#firstname").val();
+      var familyname = jQuery("#familyname").val();
+      var cellphone = jQuery("#cellphone").val();
+      var email = jQuery("#email").val();
+      var idperson = jQuery("#idperson").val();      
+      //alert("firstname: " + firstname + " familyname: " + familyname + " cellphone: " + cellphone + " email: " + email + " idperson: " + idperson);
+
+      //get the checkboxes default them to 0
+      var admin = jQuery("#admin:checked").val();
+      if(admin === undefined){admin = "0";}
+      var lc = jQuery("#lc:checked").val();
+      if(lc === undefined){lc = "0";}
+      var portal = jQuery("#portal:checked").val();
+      if(portal === undefined){portal = "0";}
+      //alert("admin: " + admin + " lc: " + lc + " portal: " + portal);
+      
+      dataString = "firstname=" + firstname + "&familyname=" + familyname + "&cellphone=" + cellphone + "&email=" + email + "&idperson=" + idperson + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal;
+      jQuery.ajax({
+            type: "POST",
+            url: "' . $actionFile . '",
+            data: dataString,
+            cache: false,
+            success: function(data){
+              console.log(data);
+              
+              jQuery("#krillo").html("KRILLO");
+            }
+        });
+
+
+    });
+  });
+</script>';
+    
+    
+    
+    
     $portal = '';
     $elegible = '';
-    $tech = '';
+    $admin = '';
     foreach ($response as $value) {
-      if($value->attributes()->authorizedportal == 1){
+      if($value->attributes()->authorizedportal == '1'){
+          echo "Portal";
           $portal = ' checked ';
       }
-      if($value->attributes()->authorizedarc == 1){
+      if($value->attributes()->authorizedarc == '1'){
+          echo "LC";
           $elegible = ' checked ';
       }        
-      if($value->attributes()->admninrights == 1){
-          $tech = ' checked ';
+      if($value->attributes()->admninrights == '1'){
+          echo "admin";
+          $admin = ' checked ';
       }        
         
       $output = '<div id="list-staff">';
       $output .= '<ul>';
       $output .= '<li>';
       $output .= '<div class="staff-container">';
-      $output .= '<form class="form" method="POST" action="#">';
+      $output .= '<form class="form" method="get" action="#">';
       $output .= '<fieldset>';
       $output .= '<div class="staff-info">';
       $output .= '<div>';
       $output .= '<div class="labels"><label for="name">Name</label></div>';
-      $output .= '<input type="text" class="name" value="' . $value->attributes()->firstname . '" id="name" name="name">';
+      $output .= '<input type="text" class="name" value="' . $value->attributes()->firstname . '" id="firstname" name="firstname">';
       $output .= '</div>';
       $output .= '<div>';
       $output .= '<div class="labels"><label for="lastname">Last name</label></div>';
-      $output .= '<input type="text" class="lastname" value="' . $value->attributes()->familyname . '" id="lastname" name="lastname">';
+      $output .= '<input type="text" class="lastname" value="' . $value->attributes()->familyname . '" id="familyname" name="familyname">';
       $output .= '</div>';
       $output .= '<div class="pp-select">';
       $output .= '<div class="labels"><label for="role">Choose role</label></div>';
@@ -180,28 +219,29 @@ class SecuritasWS {
       $output .= '</div>';
       $output .= '<div>';
       $output .= '<div class="labels"><label for="mobile">Mobile</label></div>';
-      $output .= '<input type="text" class="mobile" value="' . $value->attributes()->cellphone . '" id="mobile" name="mobile">';
+      $output .= '<input type="text" class="mobile" value="' . $value->attributes()->cellphone . '" id="cellphone" name="cellphone">';
       $output .= '</div>';
       $output .= '<div>';
       $output .= '<div class="labels"><label for="email">E-mail</label></div>';
       $output .= '<input type="text" class="email" value="' . $value->attributes()->email . '" id="email" name="email">';
       $output .= '</div>';
       $output .= '<div class="pp-wrap">';
-      $output .= '<input type="checkbox" value="forever" class="pp-check" name="tech" '.$tech.'>';
+      $output .= '<input type="checkbox" value="1" class="pp-check" name="admin" id="admin" '.$admin.'/>';
       $output .= '<div class="pp-checkbox">Technical Administrator</div>';
       $output .= '</div>';
       $output .= '<div>';
-      $output .= '<input type="checkbox" value="forever" class="pp-check" name="elegible" '.$elegible.'>';
+      $output .= '<input type="checkbox" value="1" class="pp-check" name="lc"  id="lc" '.$elegible.'/>';
       $output .= '<div class="pp-checkbox">Elegible LC</div>';
       $output .= '</div>';
       $output .= '<div>';
-      $output .= '<input type="checkbox" value="forever" class="pp-check" name="portal" '.$portal.'>';
+      $output .= '<input type="checkbox" value="1" class="pp-check" name="portal" id="portal" '.$portal.'/>';
       $output .= '<div class="pp-checkbox">Elegible Portal</div>';
       $output .= '</div>';
       $output .= '</div>';
       $output .= '<p><!--staff-info--></p>';
       $output .= '<div class="staff-buttons">';
-      $output .= '<input type="submit" class="wpcf7-submit" value="Save">';
+      $output .= '<input type="hidden" name="idperson" id="idperson" value="' . $value->attributes()->idperson . '">';
+      $output .= '<input type="submit" class="wpcf7-submit" id="save-person" value="Save">';
       $output .= '</div>';
       $output .= '</fieldset>';
       $output .= '</form>';
@@ -210,10 +250,34 @@ class SecuritasWS {
       $output .= '</li>';
       $output .= '</ul>';
       $output .= '</div>';
+      $output .= '<div id="krillo"></div>';
     }
     echo $output;
   }
 
+  
+  
+  /**
+   * Do the update in  
+   * @param type $firstname
+   * @param type $familyname
+   * @param type $cellphone
+   * @param type $email
+   * @param type $idperson
+   * @param type $admin
+   * @param type $lc
+   * @param type $portal
+   * @param type $idcompany
+   * @param type $position
+   * @param type $ended
+   * @return type 
+   */
+  public function updatePerson($firstname,$familyname,$cellphone,$email,$idperson,$admin,$lc,$portal, $idcompany, $position, $ended){
+     return $this->lime->updatePerson($firstname,$familyname,$cellphone,$email,$idperson,$admin,$lc,$portal, $idcompany, $position, $ended);
+  }
+  
+  
+  
   public function addStaff() {
     $output = '<div class="entry">';
     $output .= '<div id="list-staff">';

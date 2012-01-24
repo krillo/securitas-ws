@@ -330,21 +330,21 @@ class LimeWService {
    *
    * @return <type>
    */
-  public function updatePerson() {
+  public function updatePerson($firstname,$familyname,$cellphone,$email,$idperson,$admin,$lc,$portal, $idcompany='6016001', $position='', $ended='') {
     $params = array('data' =>
         '<data>
               <person
-                idperson="-1"
-                firstname="Kristian"
-                familyname="Erendi"
-                company="6016001"
-                ended="0"
-                position=""
-                email="kristian@erendi.se"
-                cellphone="0707-080808"
-                authorizedarc=""
-                authorizedportal="1"
-                admninrights="1"
+                idperson="'.$idperson.'"
+                firstname="'.$firstname.'"
+                familyname="'.$familyname.'"
+                company="'.$idcompany.'"
+                ended="'.$ended.'"
+                position="'.$position.'"
+                email="'.$email.'"
+                cellphone="'.$cellphone.'"
+                authorizedarc="'.$lc.'"
+                authorizedportal="'.$portal.'"
+                admninrights="'.$admin.'"
               />
             </data>'
     );
