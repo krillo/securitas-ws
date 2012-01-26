@@ -41,13 +41,11 @@ class SecuritasWS {
     }
   }
 
-
-
   /**
    * Just for testing
    */
   public function debugOutput() {
-    $response = $this->lime->selectFromOffice(1);  //funkar
+    $response = $this->lime->selectFromCompany(1);  //funkar
     var_dump($response);
   }
 
@@ -57,46 +55,69 @@ class SecuritasWS {
   public function getStaffList($companyId) {
     $response = $this->lime->selectFromPerson($companyId);
     //var_dump($response);
+    $pluginRoot = plugins_url("", __FILE__);
+    $actionFile = $pluginRoot . "/api_lime_delete_person.php";
+
+    echo '
+<script type="text/javascript">
+  function deletePerson(idperson){
+    //alert(idperson);    
+     $.ajax({
+        type: "POST",
+        url: "' . $actionFile . '",
+        data: "idperson=" + idperson,
+        success: function(data){
+          
+          $("#success").html("Delete successful");
+        }
+      });
+      return false;
+  }
+  
+</script>
+';
+
 
     $output = '<ul>';
     foreach ($response as $value) {
-      $position = "position.text";
-      $output .= '<li>';
-      $output .= '<div class="staff-container">';
-      $output .= '<div class="staff-info">';
-      $output .= '<div><strong>Name</strong>';
-      $output .= '<p>' . $value->attributes()->firstname . '</p>';
-      $output .= '</div>';
-      $output .= '<div><strong>Last name</strong>';
-      $output .= '<p>' . $value->attributes()->familyname . '</p>';
-      $output .= '</div>';
-      $output .= '<div><strong>Function</strong>';
-      $output .= '<p>' . $value->attributes()->$position . '</p>';
-      $output .= '</div>';
-      $output .= '<div><strong>E-mail</strong>';
-      $output .= '<p><a href="mailto:' . $value->attributes()->email . '">' . $value->attributes()->email . '</a></p>';
-      $output .= '</div>';
-      $output .= '<div><strong>Mobile</strong>';
-      $output .= '<p>' . $value->attributes()->cellphone . '</p>';
-      $output .= '</div>';
-      $output .= '<div><strong>Eligibility</strong>';
-      $output .= '<p>' . $value->attributes()->authorizedarc . '</p>';
-      $output .= '</div>';
-      $output .= '</div>';
-      $output .= '<div id="staff-buttons">';
-      $output .= '<input type="hidden" value="' . $value->attributes()->idperson . '" /><span><br />';
-      $output .= '<input class="wpcf7-submit" type="submit" value="X" /><span><br />';
-      $output .= '<input class="wpcf7-submit" type="submit" value="Edit" /></span>';
-      $output .= '</div>';
-      $output .= '</div>';
-      $output .= '</li>';
+      if ($value->attributes()->ended == '0') {
+        $position = "position.text";
+        $output .= '<li>';
+        $output .= '<div class="staff-container">';
+        $output .= '<div class="staff-info">';
+        $output .= '<div><strong>Name</strong>';
+        $output .= '<p>' . $value->attributes()->firstname . '</p>';
+        $output .= '</div>';
+        $output .= '<div><strong>Last name</strong>';
+        $output .= '<p>' . $value->attributes()->familyname . '</p>';
+        $output .= '</div>';
+        $output .= '<div><strong>Function</strong>';
+        $output .= '<p>' . $value->attributes()->$position . '</p>';
+        $output .= '</div>';
+        $output .= '<div><strong>E-mail</strong>';
+        $output .= '<p><a href="mailto:' . $value->attributes()->email . '">' . $value->attributes()->email . '</a></p>';
+        $output .= '</div>';
+        $output .= '<div><strong>Mobile</strong>';
+        $output .= '<p>' . $value->attributes()->cellphone . '</p>';
+        $output .= '</div>';
+        $output .= '<div><strong>Eligibility</strong>';
+        $output .= '<p>' . $value->attributes()->authorizedarc . '</p>';
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '<div id="staff-buttons">';
+        $output .= '<input type="hidden" value="' . $value->attributes()->idperson . '" /><span><br />';
+        $output .= '<input class="wpcf7-submit" type="button" value="X" onclick="deletePerson(' . $value->attributes()->idperson . ');return false;" /><span><br />';
+        $output .= '<input class="wpcf7-submit" type="button" value="Edit" /></span>';
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '</li>';
+        $output .= '<div id="success"></div>';
+      }
     }
     $output .= '<ul>';
     echo $output;
   }
 
-
-  
   /**
    * Return the markup to edit the person by personId
    * A jQuery-script to handle the insert will also be added to the markup
@@ -106,7 +127,7 @@ class SecuritasWS {
   public function editPerson($personId) {
     $response = $this->lime->getPerson($personId);
     //var_dump($response);
-    
+
     $pluginRoot = plugins_url("", __FILE__);
     $actionFile = $pluginRoot . "/api_lime_update_person.php";
     echo '<script type="text/javascript">
@@ -130,7 +151,8 @@ class SecuritasWS {
       if(portal === undefined){portal = "0";}
       //alert("admin: " + admin + " lc: " + lc + " portal: " + portal);
       
-      dataString = "firstname=" + firstname + "&familyname=" + familyname + "&cellphone=" + cellphone + "&email=" + email + "&idperson=" + idperson + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal;
+      dataString = "firstname=" + firstname + "&familyname=" + familyname + "&cellphone=" + cellphone + "&email=" + email
+                    + "&idperson=" + idperson + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal;
       jQuery.ajax({
             type: "POST",
             url: "' . $actionFile . '",
@@ -139,7 +161,7 @@ class SecuritasWS {
             success: function(data){
               console.log(data);
               
-              jQuery("#krillo").html("KRILLO");
+              jQuery("#success").html("Save successful");
             }
         });
 
@@ -147,25 +169,25 @@ class SecuritasWS {
     });
   });
 </script>';
-    
-        
+
+
     $portal = '';
     $elegible = '';
     $admin = '';
     foreach ($response as $value) {
-      if($value->attributes()->authorizedportal == '1'){
-          echo "Portal";
-          $portal = ' checked ';
+      if ($value->attributes()->authorizedportal == '1') {
+        echo "Portal";
+        $portal = ' checked ';
       }
-      if($value->attributes()->authorizedarc == '1'){
-          echo "LC";
-          $elegible = ' checked ';
-      }        
-      if($value->attributes()->admninrights == '1'){
-          echo "admin";
-          $admin = ' checked ';
-      }        
-        
+      if ($value->attributes()->authorizedarc == '1') {
+        echo "LC";
+        $elegible = ' checked ';
+      }
+      if ($value->attributes()->admninrights == '1') {
+        echo "admin";
+        $admin = ' checked ';
+      }
+
       $output = '<div id="list-staff">';
       $output .= '<ul>';
       $output .= '<li>';
@@ -199,15 +221,15 @@ class SecuritasWS {
       $output .= '<input type="text" class="email" value="' . $value->attributes()->email . '" id="email" name="email">';
       $output .= '</div>';
       $output .= '<div class="pp-wrap">';
-      $output .= '<input type="checkbox" value="1" class="pp-check" name="admin" id="admin" '.$admin.'/>';
+      $output .= '<input type="checkbox" value="1" class="pp-check" name="admin" id="admin" ' . $admin . '/>';
       $output .= '<div class="pp-checkbox">Technical Administrator</div>';
       $output .= '</div>';
       $output .= '<div>';
-      $output .= '<input type="checkbox" value="1" class="pp-check" name="lc"  id="lc" '.$elegible.'/>';
+      $output .= '<input type="checkbox" value="1" class="pp-check" name="lc"  id="lc" ' . $elegible . '/>';
       $output .= '<div class="pp-checkbox">Elegible LC</div>';
       $output .= '</div>';
       $output .= '<div>';
-      $output .= '<input type="checkbox" value="1" class="pp-check" name="portal" id="portal" '.$portal.'/>';
+      $output .= '<input type="checkbox" value="1" class="pp-check" name="portal" id="portal" ' . $portal . '/>';
       $output .= '<div class="pp-checkbox">Elegible Portal</div>';
       $output .= '</div>';
       $output .= '</div>';
@@ -223,28 +245,21 @@ class SecuritasWS {
       $output .= '</li>';
       $output .= '</ul>';
       $output .= '</div>';
-      $output .= '<div id="krillo"></div>';
+      $output .= '<div id="success"></div>';
     }
     echo $output;
   }
 
-  
-  
-
-  
-  
-  
-  
   /**
    * Return the markup to add a person by companyId
    * A jQuery-script to handle the insert will also be added to the markup
    * 
    * @param type $companyId 
    */
-  public function addPerson($companyId) {
+  public static function addPerson($companyId) {
     $pluginRoot = plugins_url("", __FILE__);
     $actionFile = $pluginRoot . "/api_lime_add_person.php";
-    
+
     echo '<script type="text/javascript">
   jQuery(document).ready(function(){
     jQuery("#save-person").click(function(event) {
@@ -266,7 +281,8 @@ class SecuritasWS {
       if(portal === undefined){portal = "0";}
       //alert("admin: " + admin + " lc: " + lc + " portal: " + portal);
       
-      dataString = "firstname=" + firstname + "&familyname=" + familyname + "&cellphone=" + cellphone + "&email=" + email + "&idcompany=" + idcompany + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal;
+      dataString = "firstname=" + firstname + "&familyname=" + familyname + "&cellphone=" + cellphone + "&email=" + email + "&idcompany=" 
+                   + idcompany + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal;
       jQuery.ajax({
             type: "POST",
             url: "' . $actionFile . '",
@@ -275,7 +291,7 @@ class SecuritasWS {
             success: function(data){
               console.log(data);
               
-              jQuery("#krillo").html("KRILLO");
+              jQuery("#success").html("Save successful");
             }
         });
 
@@ -283,76 +299,74 @@ class SecuritasWS {
     });
   });
 </script>';
-    
-     
-        
-      $output = '<div id="list-staff">';
-      $output .= '<ul>';
-      $output .= '<li>';
-      $output .= '<div class="staff-container">';
-      $output .= '<form class="form" method="get" action="#">';
-      $output .= '<fieldset>';
-      $output .= '<div class="staff-info">';
-      $output .= '<div>';
-      $output .= '<div class="labels"><label for="name">Name</label></div>';
-      $output .= '<input type="text" class="name" value="" id="firstname" name="firstname">';
-      $output .= '</div>';
-      $output .= '<div>';
-      $output .= '<div class="labels"><label for="lastname">Last name</label></div>';
-      $output .= '<input type="text" class="lastname" value="" id="familyname" name="familyname">';
-      $output .= '</div>';
-      $output .= '<div class="pp-select">';
-      $output .= '<div class="labels"><label for="role">Choose role</label></div>';
-      $output .= '<select id="role">';
-      $output .= '<option value="sales">Sales</option>';
-      $output .= '<option value="technician">Technician</option>';
-      $output .= '<option value="marketing">Marketing</option>';
-      $output .= '<option value="other">Other</option>';
-      $output .= '</select>';
-      $output .= '</div>';
-      $output .= '<div>';
-      $output .= '<div class="labels"><label for="mobile">Mobile</label></div>';
-      $output .= '<input type="text" class="mobile" value="" id="cellphone" name="cellphone">';
-      $output .= '</div>';
-      $output .= '<div>';
-      $output .= '<div class="labels"><label for="email">E-mail</label></div>';
-      $output .= '<input type="text" class="email" value="" id="email" name="email">';
-      $output .= '</div>';
-      $output .= '<div class="pp-wrap">';
-      $output .= '<input type="checkbox" value="1" class="pp-check" name="admin" id="admin" />';
-      $output .= '<div class="pp-checkbox">Technical Administrator</div>';
-      $output .= '</div>';
-      $output .= '<div>';
-      $output .= '<input type="checkbox" value="1" class="pp-check" name="lc"  id="lc" />';
-      $output .= '<div class="pp-checkbox">Elegible LC</div>';
-      $output .= '</div>';
-      $output .= '<div>';
-      $output .= '<input type="checkbox" value="1" class="pp-check" name="portal" id="portal" />';
-      $output .= '<div class="pp-checkbox">Elegible Portal</div>';
-      $output .= '</div>';
-      $output .= '</div>';
-      $output .= '<p><!--staff-info--></p>';
-      $output .= '<div class="staff-buttons">';
-      $output .= '<input type="hidden" name="idcompany" id="idcompany" value="'.$companyId.'">';
-      $output .= '<input type="submit" class="wpcf7-submit" id="save-person" value="Save">';
-      $output .= '</div>';
-      $output .= '</fieldset>';
-      $output .= '</form>';
-      $output .= '</div>';
-      $output .= '<p><!--staff-container-->';
-      $output .= '</li>';
-      $output .= '</ul>';
-      $output .= '</div>';
-      $output .= '<div id="krillo"></div>';
-      
-      
+
+
+    $output = '<div id="list-staff">';
+    $output .= '<ul>';
+    $output .= '<li>';
+    $output .= '<div class="staff-container">';
+    $output .= '<form class="form" method="get" action="#">';
+    $output .= '<fieldset>';
+    $output .= '<div class="staff-info">';
+    $output .= '<div>';
+    $output .= '<div class="labels"><label for="name">Name</label></div>';
+    $output .= '<input type="text" class="name" value="" id="firstname" name="firstname">';
+    $output .= '</div>';
+    $output .= '<div>';
+    $output .= '<div class="labels"><label for="lastname">Last name</label></div>';
+    $output .= '<input type="text" class="lastname" value="" id="familyname" name="familyname">';
+    $output .= '</div>';
+    $output .= '<div class="pp-select">';
+    $output .= '<div class="labels"><label for="role">Choose role</label></div>';
+    $output .= '<select id="role">';
+    $output .= '<option value="sales">Sales</option>';
+    $output .= '<option value="technician">Technician</option>';
+    $output .= '<option value="marketing">Marketing</option>';
+    $output .= '<option value="other">Other</option>';
+    $output .= '</select>';
+    $output .= '</div>';
+    $output .= '<div>';
+    $output .= '<div class="labels"><label for="mobile">Mobile</label></div>';
+    $output .= '<input type="text" class="mobile" value="" id="cellphone" name="cellphone">';
+    $output .= '</div>';
+    $output .= '<div>';
+    $output .= '<div class="labels"><label for="email">E-mail</label></div>';
+    $output .= '<input type="text" class="email" value="" id="email" name="email">';
+    $output .= '</div>';
+    $output .= '<div class="pp-wrap">';
+    $output .= '<input type="checkbox" value="1" class="pp-check" name="admin" id="admin" />';
+    $output .= '<div class="pp-checkbox">Technical Administrator</div>';
+    $output .= '</div>';
+    $output .= '<div>';
+    $output .= '<input type="checkbox" value="1" class="pp-check" name="lc"  id="lc" />';
+    $output .= '<div class="pp-checkbox">Elegible LC</div>';
+    $output .= '</div>';
+    $output .= '<div>';
+    $output .= '<input type="checkbox" value="1" class="pp-check" name="portal" id="portal" />';
+    $output .= '<div class="pp-checkbox">Elegible Portal</div>';
+    $output .= '</div>';
+    $output .= '</div>';
+    $output .= '<p><!--staff-info--></p>';
+    $output .= '<div class="staff-buttons">';
+    $output .= '<input type="hidden" name="idcompany" id="idcompany" value="' . $companyId . '">';
+    $output .= '<input type="submit" class="wpcf7-submit" id="save-person" value="Save">';
+    $output .= '</div>';
+    $output .= '</fieldset>';
+    $output .= '</form>';
+    $output .= '</div>';
+    $output .= '<p><!--staff-container-->';
+    $output .= '</li>';
+    $output .= '</ul>';
+    $output .= '</div>';
+    $output .= '<div id="success"></div>';
+
     echo $output;
   }
 
-  
-  
   /**
-   * Do the update in  
+   * Update person in WS, requires $idperson
+   * An insert requires companyId and -1 as $idperson  
+   * 
    * @param type $firstname
    * @param type $familyname
    * @param type $cellphone
@@ -366,12 +380,17 @@ class SecuritasWS {
    * @param type $ended
    * @return type 
    */
-  public function updatePerson($firstname,$familyname,$cellphone,$email,$idperson,$admin,$lc,$portal, $idcompany, $position, $ended){
-     return $this->lime->updatePerson($firstname,$familyname,$cellphone,$email,$idperson,$admin,$lc,$portal, $idcompany, $position, $ended);
+  public function updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended) {
+    return $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended);
   }
-  
 
-}  //end class SecuritasWS
+  public function deletePerson($idperson) {
+    return $this->lime->deletePerson($idperson);
+  }
+
+}
+
+//end class SecuritasWS
 
 
 
@@ -379,10 +398,9 @@ class SecuritasWS {
 
 
 
-/*************************************************
+/* * ***********************************************
  * Call these functions from the wordpress theme
- *************************************************/
-
+ * *********************************************** */
 
 /**
  * Get the staff list by companyId
@@ -404,24 +422,27 @@ function securitasWSeditStaff($personId) {
   $lime->editPerson($personId);
 }
 
-
 /**
  * Add a person in the companyId
  * 
  * @param type $companyId 
  */
 function securitasWSaddStaff($companyId) {
-  $lime = new SecuritasWS();
-  $lime->addPerson($companyId);
+  SecuritasWS::addPerson($companyId);
 }
 
+/**
+ * Just for testing. 
+ * Outputs a company dump from WS 
+ */
+function securitasWSdebugOutput() {
+  $lime = new SecuritasWS();
+  $lime->debugOutput();
+}
 
-
-
-
-/************************************
+/* * **********************************
  * Wordpress admin pages
- ************************************/
+ * ********************************** */
 
 add_action('admin_menu', 'lime_plugin_menu');  //network_admin_menu
 

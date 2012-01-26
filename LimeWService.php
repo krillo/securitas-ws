@@ -242,6 +242,31 @@ class LimeWService {
   }
 
   
+  
+  
+    /**
+   * Select person by id
+   * @param <type> $personId
+   * @return <type>
+   */
+  public function deletePerson($idperson) {
+    if (isset($idperson)) {
+   $params = array('data' =>
+        '<data>
+           <person
+             idperson="'.$idperson.'"
+             ended="1"
+           />
+         </data>'
+    );
+      $xml = $this->doWSQuery($params, 'update', 'deletePerson()');
+      return $xml;
+    } else {
+      $this->saveToFile($this->logFile, 'Exception in deletePerson(). No personId ', 'ERROR');
+    }
+  }
+  
+  
   /**
    * This function will do the actual WS lookup and handle logging and errors
    * Supply the query (params) and the type of query to be executed
@@ -257,7 +282,18 @@ class LimeWService {
       if (self::debug) {
         $this->saveToFile($this->logFile, print_r($params, true), 'DEBUG');
       }
-      $response = $this->client->GetXmlQueryData($params);
+      switch ($queryType) {
+    case 'select':
+        $response = $this->client->GetXmlQueryData($params);
+        break;
+    case 'update':
+        $response = $this->client->UpdateData($params);
+        break;
+    case 'databaseschema':
+        $response = $this->client->GetDatabaseSchema($params);
+        break;
+}
+      
       $this->saveToFile($this->logFile, $this->client->__getLastResponse(), 'INFO');
       $response = $this->client->__getLastResponse();
       $xml = $this->responseToSimpleXML($response, $queryType);
@@ -365,6 +401,10 @@ class LimeWService {
     }
   }
 
+  
+  
+  
+  
   /**
    * Convert the response to simpleXML object
    * @param <type> $response
