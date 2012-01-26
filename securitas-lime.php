@@ -41,36 +41,7 @@ class SecuritasWS {
     }
   }
 
-  /**
-   * install function, ie create or update the database
-   */
-  public static function install() {
-    global $wpdb;
-    $installed_ver = get_option("twentyfourEmailBinDbVersion");
-    if ($installed_ver != twentyfourEmailBin::$myDbVersion) {
-      require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-      $table_name = $wpdb->prefix . 'emailbin';
-      $sql = "CREATE TABLE " . $table_name . " (
-              id mediumint(9) NOT NULL AUTO_INCREMENT,
-              email varchar(64) NOT NULL,
-              createDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-              UNIQUE KEY id (id)
-              );";
-      dbDelta($sql);
-      //echo $sql;
-      update_option("twentyfourEmailBinDbVersion", twentyfourEmailBin::$myDbVersion);
-    }
-  }
 
-  /**
-   * checks if a database table update is needed
-   */
-  public static function update() {
-    $installed_ver = get_option("twentyfourEmailBinDbVersion");
-    if ($installed_ver != twentyfourEmailBin::$myDbVersion) {
-      twentyfourEmailBin::install();
-    }
-  }
 
   /**
    * Just for testing
@@ -124,13 +95,17 @@ class SecuritasWS {
     echo $output;
   }
 
+
+  
   /**
-   * Return the markup of the editable person
+   * Return the markup to edit the person by personId
+   * A jQuery-script to handle the insert will also be added to the markup
+   * 
+   * @param type $personId 
    */
   public function editPerson($personId) {
     $response = $this->lime->getPerson($personId);
-    var_dump($response);
-
+    //var_dump($response);
     
     $pluginRoot = plugins_url("", __FILE__);
     $actionFile = $pluginRoot . "/api_lime_update_person.php";
@@ -173,9 +148,7 @@ class SecuritasWS {
   });
 </script>';
     
-    
-    
-    
+        
     $portal = '';
     $elegible = '';
     $admin = '';
@@ -257,6 +230,127 @@ class SecuritasWS {
 
   
   
+
+  
+  
+  
+  
+  /**
+   * Return the markup to add a person by companyId
+   * A jQuery-script to handle the insert will also be added to the markup
+   * 
+   * @param type $companyId 
+   */
+  public function addPerson($companyId) {
+    $pluginRoot = plugins_url("", __FILE__);
+    $actionFile = $pluginRoot . "/api_lime_add_person.php";
+    
+    echo '<script type="text/javascript">
+  jQuery(document).ready(function(){
+    jQuery("#save-person").click(function(event) {
+      event.preventDefault();
+      var self = jQuery(this);
+      var firstname = jQuery("#firstname").val();
+      var familyname = jQuery("#familyname").val();
+      var cellphone = jQuery("#cellphone").val();
+      var email = jQuery("#email").val();
+      var idcompany = jQuery("#idcompany").val();      
+      //alert("firstname: " + firstname + " familyname: " + familyname + " cellphone: " + cellphone + " email: " + email + " idcompany: " + idcompany);
+
+      //get the checkboxes default them to 0
+      var admin = jQuery("#admin:checked").val();
+      if(admin === undefined){admin = "0";}
+      var lc = jQuery("#lc:checked").val();
+      if(lc === undefined){lc = "0";}
+      var portal = jQuery("#portal:checked").val();
+      if(portal === undefined){portal = "0";}
+      //alert("admin: " + admin + " lc: " + lc + " portal: " + portal);
+      
+      dataString = "firstname=" + firstname + "&familyname=" + familyname + "&cellphone=" + cellphone + "&email=" + email + "&idcompany=" + idcompany + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal;
+      jQuery.ajax({
+            type: "POST",
+            url: "' . $actionFile . '",
+            data: dataString,
+            cache: false,
+            success: function(data){
+              console.log(data);
+              
+              jQuery("#krillo").html("KRILLO");
+            }
+        });
+
+
+    });
+  });
+</script>';
+    
+     
+        
+      $output = '<div id="list-staff">';
+      $output .= '<ul>';
+      $output .= '<li>';
+      $output .= '<div class="staff-container">';
+      $output .= '<form class="form" method="get" action="#">';
+      $output .= '<fieldset>';
+      $output .= '<div class="staff-info">';
+      $output .= '<div>';
+      $output .= '<div class="labels"><label for="name">Name</label></div>';
+      $output .= '<input type="text" class="name" value="" id="firstname" name="firstname">';
+      $output .= '</div>';
+      $output .= '<div>';
+      $output .= '<div class="labels"><label for="lastname">Last name</label></div>';
+      $output .= '<input type="text" class="lastname" value="" id="familyname" name="familyname">';
+      $output .= '</div>';
+      $output .= '<div class="pp-select">';
+      $output .= '<div class="labels"><label for="role">Choose role</label></div>';
+      $output .= '<select id="role">';
+      $output .= '<option value="sales">Sales</option>';
+      $output .= '<option value="technician">Technician</option>';
+      $output .= '<option value="marketing">Marketing</option>';
+      $output .= '<option value="other">Other</option>';
+      $output .= '</select>';
+      $output .= '</div>';
+      $output .= '<div>';
+      $output .= '<div class="labels"><label for="mobile">Mobile</label></div>';
+      $output .= '<input type="text" class="mobile" value="" id="cellphone" name="cellphone">';
+      $output .= '</div>';
+      $output .= '<div>';
+      $output .= '<div class="labels"><label for="email">E-mail</label></div>';
+      $output .= '<input type="text" class="email" value="" id="email" name="email">';
+      $output .= '</div>';
+      $output .= '<div class="pp-wrap">';
+      $output .= '<input type="checkbox" value="1" class="pp-check" name="admin" id="admin" />';
+      $output .= '<div class="pp-checkbox">Technical Administrator</div>';
+      $output .= '</div>';
+      $output .= '<div>';
+      $output .= '<input type="checkbox" value="1" class="pp-check" name="lc"  id="lc" />';
+      $output .= '<div class="pp-checkbox">Elegible LC</div>';
+      $output .= '</div>';
+      $output .= '<div>';
+      $output .= '<input type="checkbox" value="1" class="pp-check" name="portal" id="portal" />';
+      $output .= '<div class="pp-checkbox">Elegible Portal</div>';
+      $output .= '</div>';
+      $output .= '</div>';
+      $output .= '<p><!--staff-info--></p>';
+      $output .= '<div class="staff-buttons">';
+      $output .= '<input type="hidden" name="idcompany" id="idcompany" value="'.$companyId.'">';
+      $output .= '<input type="submit" class="wpcf7-submit" id="save-person" value="Save">';
+      $output .= '</div>';
+      $output .= '</fieldset>';
+      $output .= '</form>';
+      $output .= '</div>';
+      $output .= '<p><!--staff-container-->';
+      $output .= '</li>';
+      $output .= '</ul>';
+      $output .= '</div>';
+      $output .= '<div id="krillo"></div>';
+      
+      
+    echo $output;
+  }
+
+  
+  
   /**
    * Do the update in  
    * @param type $firstname
@@ -276,150 +370,24 @@ class SecuritasWS {
      return $this->lime->updatePerson($firstname,$familyname,$cellphone,$email,$idperson,$admin,$lc,$portal, $idcompany, $position, $ended);
   }
   
-  
-  
-  public function addStaff() {
-    $output = '<div class="entry">';
-    $output .= '<div id="list-staff">';
-    $output .= '<ul>';
-    $output .= '<li>';
-    $output .= '<div id="staff-container">';
-    $output .= '<form class="form" method="POST" action="#">';
-    $output .= '<fieldset>';
-    $output .= '<div id="staff-info">';
-    $output .= '<div>';
-    $output .= '<div id="labels"><label for="name">Name</label></div>';
-    $output .= '<input type="text" class="name" value="" id="name" name="name">';
-    $output .= '</div>';
-    $output .= '<div>';
-    $output .= '<div id="labels"><label for="lastname">Last name</label></div>';
-    $output .= '<input type="text" class="lastname" value="" id="lastname" name="lastname">';
-    $output .= '</div>';
-    $output .= '<div class="pp-select">';
-    $output .= '<div id="labels"><label for="mobile">Choose role</label></div>';
-    $output .= '<select>';
-    $output .= '<option value="choose">Choose</option>';
-    $output .= '<option value="sales">Sales</option>';
-    $output .= '<option value="technician">Technician</option>';
-    $output .= '<option value="marketing">Marketing</option>';
-    $output .= '<option value="other">Other</option>';
-    $output .= '</select>';
-    $output .= '</div>';
-    $output .= '<div>';
-    $output .= '<div id="labels"><label for="mobile">Mobile</label></div>';
-    $output .= '<input type="text" class="mobile" value="" id="mobile" name="mobile">';
-    $output .= '</div>';
-    $output .= '<div>';
-    $output .= '<div id="labels"><label for="email">E-mail</label></div>';
-    $output .= '<input type="text" class="email" value="" id="email" name="email">';
-    $output .= '</div>';
-    $output .= '<div class="pp-wrap">';
-    $output .= '<input type="checkbox" value="forever" class="pp-check" name="tech">';
-    $output .= '<div class="pp-checkbox">Technical Administrator</div>';
-    $output .= '</div>';
-    $output .= '<div>';
-    $output .= '<input type="checkbox" value="forever" class="pp-check" name="elegible">';
-    $output .= '<div class="pp-checkbox">Elegible LC</div>';
-    $output .= '</div>';
-    $output .= '<div>';
-    $output .= '<input type="checkbox" value="forever" class="pp-check" name="portal">';
-    $output .= '<div class="pp-checkbox">Elegible Portal</div>';
-    $output .= '</div>';
-    $output .= '</div>';
-    $output .= '<p><!--staff-info--></p>';
-    $output .= '<div id="staff-buttons">';
-    $output .= '<input type="submit" class="wpcf7-submit" value="Save">';
-    $output .= '</div>';
-    $output .= '</fieldset>';
-    $output .= '</form>';
-    $output .= '</div>';
-    $output .= '<p><!--staff-container-->';
-    $output .= '</li>';
-    $output .= '</ul>';
-    $output .= '</div>';
-    $output .= '	</div><!-- /.entry -->';
-  }
 
-  /**
-   * Add an email to the db if it has no duplicate already
-   *
-   * @global  $wpdb
-   * @param <type> $email
-   */
-  public function twentyfourEBinsert($email) {
-    $exists = $this->twentyfourEBgetEmail($email);
-    if (empty($exists)) {
-      global $wpdb;
-      $table_name = $wpdb->prefix . 'emailbin';
-      $sql = "insert into " . $table_name . " (email) values('" . $email . "');";
-      $wpdb->get_results($sql);
-    }
-  }
+}  //end class SecuritasWS
 
-  /**
-   * If email exists this function will return the whole row
-   *
-   * @global $wpdb $wpdb
-   * @param <type> $email
-   * @return <type>
-   */
-  public function twentyfourEBgetEmail($email) {
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'emailbin';
-    $sql = "select * from " . $table_name . " where email = '" . $email . "';";
-    $res = $wpdb->get_results($sql);
-    return $res;
-  }
 
-  /**
-   * Print the javascript to the page
-   */
-  public function twentyfourEBCode() {
-    $pluginRoot = plugins_url("", __FILE__);
-    $actionFile = $pluginRoot . "/api/emailbin.php";
-    echo '<script type="text/javascript">
-  jQuery(document).ready(function(){
-    jQuery("#pren").click(function(event) {
-      event.preventDefault();
-      if( $("#pren-email").val().indexOf("@") == -1){
-        alert("Felaktig emailadress");
-      } else {
-        var dataString = "email="+ jQuery("#pren-email").val();
-        //alert(dataString);
-        var self = jQuery(this);    var self = jQuery(this);
-        if(!self.hasClass("used")){  //continue only if class "used" is not present
-          if(dataString==""){
-          } else{
-            jQuery.ajax({
-              type: "POST",
-              url: "' . $actionFile . '",
-              data: dataString,
-              cache: false,
-              success: function(html){
-              self.addClass("used");
-              }
-            });
-          }
-          return false;
-        }
-      }
-    });
-  });
-</script>';
 
-    echo '<div class="newsletter">
-        <input type="text" class="field" value="" placeholder="Din e-postadress:" id="pren-email"/>
-        <input type="submit" class="button" value="Prenumerera" id="pren"/>
 
-        <a href="" class="anonymous">» Lorem ipsum anonymitet</a>
-        <a href="" class="stop">» Avsluta prenumeration</a>
-      </div>';
-  }
 
-}
+
+
+/*************************************************
+ * Call these functions from the wordpress theme
+ *************************************************/
+
 
 /**
- * get the staff list by companyId
+ * Get the staff list by companyId
+ * 
+ * @param type $companyId 
  */
 function securitasWSgetStaffList($companyId) {
   $lime = new SecuritasWS();
@@ -427,32 +395,37 @@ function securitasWSgetStaffList($companyId) {
 }
 
 /**
- * get the staff list by companyId
+ * Edit a person by personId
+ * 
+ * @param type $personId 
  */
 function securitasWSeditStaff($personId) {
   $lime = new SecuritasWS();
   $lime->editPerson($personId);
 }
 
+
 /**
- * Shortcode [LimeStaffList]
- * @param <type> $atts
- * @return <type>
+ * Add a person in the companyId
+ * 
+ * @param type $companyId 
  */
-/*
-  function lime_staff_list($atts) {
+function securitasWSaddStaff($companyId) {
   $lime = new SecuritasWS();
-  $lime->getStaffList();
-  }
+  $lime->addPerson($companyId);
+}
 
-  add_shortcode('LimeStaffList', 'lime_staff_list');
- */
 
+
+
+
+/************************************
+ * Wordpress admin pages
+ ************************************/
 
 add_action('admin_menu', 'lime_plugin_menu');  //network_admin_menu
 
 function lime_plugin_menu() {
-  //add_menu_page('Email för nyhetsbrev', 'Email', 'manage_options', __FILE__, 'twentyfourEmailBinListPage');
   add_options_page('Lims WS Plugin Options', 'Securitas WS', 'manage_options', 'limeWS', 'wSOptionsPage');
 }
 
