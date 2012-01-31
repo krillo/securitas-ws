@@ -62,13 +62,12 @@ class SecuritasWS {
 <script type="text/javascript">
   function deletePerson(idperson){
     //alert(idperson);    
-     $.ajax({
+     jQuery.ajax({
         type: "POST",
         url: "' . $actionFile . '",
         data: "idperson=" + idperson,
-        success: function(data){
-          
-          $("#success").html("Delete successful");
+        success: function(data){         
+          jQuery("#success").html("Delete successful");
         }
       });
       return false;
@@ -139,8 +138,9 @@ class SecuritasWS {
       var familyname = jQuery("#familyname").val();
       var cellphone = jQuery("#cellphone").val();
       var email = jQuery("#email").val();
-      var idperson = jQuery("#idperson").val();      
-      //alert("firstname: " + firstname + " familyname: " + familyname + " cellphone: " + cellphone + " email: " + email + " idperson: " + idperson);
+      var idperson = jQuery("#idperson").val();    
+      var position = jQuery("#position").val(); 
+      //alert("firstname: " + firstname + " familyname: " + familyname + " cellphone: " + cellphone + " email: " + email + " idperson: " + idperson + " &position=" + position);
 
       //get the checkboxes default them to 0
       var admin = jQuery("#admin:checked").val();
@@ -152,7 +152,7 @@ class SecuritasWS {
       //alert("admin: " + admin + " lc: " + lc + " portal: " + portal);
       
       dataString = "firstname=" + firstname + "&familyname=" + familyname + "&cellphone=" + cellphone + "&email=" + email
-                    + "&idperson=" + idperson + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal;
+                    + "&idperson=" + idperson + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal + "&position=" + position;
       jQuery.ajax({
             type: "POST",
             url: "' . $actionFile . '",
@@ -170,24 +170,50 @@ class SecuritasWS {
   });
 </script>';
 
-
+    
     $portal = '';
     $elegible = '';
     $admin = '';
     foreach ($response as $value) {
+      //the checkboxes
       if ($value->attributes()->authorizedportal == '1') {
-        echo "Portal";
+        //echo "Portal";
         $portal = ' checked ';
       }
       if ($value->attributes()->authorizedarc == '1') {
-        echo "LC";
+        //echo "LC";
         $elegible = ' checked ';
       }
       if ($value->attributes()->admninrights == '1') {
-        echo "admin";
+        //echo "admin";
         $admin = ' checked ';
       }
 
+      //the dropdown
+      $sales = '';
+      $technician = '';
+      $marketing = '';
+      $other = '';
+      //echo $value->attributes()->position;
+      switch ($value->attributes()->position) {
+        case ';2161001;':
+          $sales = 'selected';
+          break;
+        case ';2163001;':
+          $technician = 'selected';
+          break;
+        case ';2164001;':
+          $marketing = 'selected';
+          break;
+        case ';3065001;':
+          $other = 'selected';
+          break;
+        default:  //default to other
+          $other = 'selected';
+          break;
+      }
+      //$position = $this->lime->positionTranslate('code', $arg)
+      
       $output = '<div id="list-staff">';
       $output .= '<ul>';
       $output .= '<li>';
@@ -204,12 +230,12 @@ class SecuritasWS {
       $output .= '<input type="text" class="lastname" value="' . $value->attributes()->familyname . '" id="familyname" name="familyname">';
       $output .= '</div>';
       $output .= '<div class="pp-select">';
-      $output .= '<div class="labels"><label for="role">Choose role</label></div>';
-      $output .= '<select id="role">';
-      $output .= '<option value="sales">Sales</option>';
-      $output .= '<option value="technician">Technician</option>';
-      $output .= '<option value="marketing">Marketing</option>';
-      $output .= '<option value="other">Other</option>';
+      $output .= '<div class="labels"><label for="position">Choose role</label></div>';
+      $output .= '<select id="position">';
+      $output .= '<option value="2161001" '. $sales .'>Sales</option>';
+      $output .= '<option value="2163001" '. $technician .'>Technician</option>';
+      $output .= '<option value="2164001" '. $marketing .'>Marketing</option>';
+      $output .= '<option value="3065001" '. $other .'>Other</option>';
       $output .= '</select>';
       $output .= '</div>';
       $output .= '<div>';
@@ -250,6 +276,8 @@ class SecuritasWS {
     echo $output;
   }
 
+
+
   /**
    * Return the markup to add a person by companyId
    * A jQuery-script to handle the insert will also be added to the markup
@@ -269,8 +297,9 @@ class SecuritasWS {
       var familyname = jQuery("#familyname").val();
       var cellphone = jQuery("#cellphone").val();
       var email = jQuery("#email").val();
-      var idcompany = jQuery("#idcompany").val();      
-      //alert("firstname: " + firstname + " familyname: " + familyname + " cellphone: " + cellphone + " email: " + email + " idcompany: " + idcompany);
+      var idcompany = jQuery("#idcompany").val();
+      var position = jQuery("#position").val(); 
+      alert("firstname: " + firstname + " familyname: " + familyname + " cellphone: " + cellphone + " email: " + email + " idcompany: " + idcompany + " &position=" + position);
 
       //get the checkboxes default them to 0
       var admin = jQuery("#admin:checked").val();
@@ -282,7 +311,7 @@ class SecuritasWS {
       //alert("admin: " + admin + " lc: " + lc + " portal: " + portal);
       
       dataString = "firstname=" + firstname + "&familyname=" + familyname + "&cellphone=" + cellphone + "&email=" + email + "&idcompany=" 
-                   + idcompany + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal;
+                   + idcompany + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal + "&position=" + position;
       jQuery.ajax({
             type: "POST",
             url: "' . $actionFile . '",
@@ -317,12 +346,12 @@ class SecuritasWS {
     $output .= '<input type="text" class="lastname" value="" id="familyname" name="familyname">';
     $output .= '</div>';
     $output .= '<div class="pp-select">';
-    $output .= '<div class="labels"><label for="role">Choose role</label></div>';
-    $output .= '<select id="role">';
-    $output .= '<option value="sales">Sales</option>';
-    $output .= '<option value="technician">Technician</option>';
-    $output .= '<option value="marketing">Marketing</option>';
-    $output .= '<option value="other">Other</option>';
+    $output .= '<div class="labels"><label for="position">Choose role</label></div>';
+    $output .= '<select id="position">';
+    $output .= '<option value="2161001" >Sales</option>';
+    $output .= '<option value="2163001" >Technician</option>';
+    $output .= '<option value="2164001" >Marketing</option>';
+    $output .= '<option value="3065001" >Other</option>';
     $output .= '</select>';
     $output .= '</div>';
     $output .= '<div>';
@@ -440,9 +469,9 @@ function securitasWSdebugOutput() {
   $lime->debugOutput();
 }
 
-/* * **********************************
+/**************************************
  * Wordpress admin pages
- * ********************************** */
+ *************************************/
 
 add_action('admin_menu', 'lime_plugin_menu');  //network_admin_menu
 
@@ -474,3 +503,38 @@ function wSOptionsPage() {
   echo '</div>';
 }
 
+
+
+
+/*******************************************
+ * Wordpress admin - extra companyId field 
+ *******************************************/
+
+
+add_action( 'show_user_profile', 'extra_user_company_id' );
+add_action( 'edit_user_profile', 'extra_user_company_id' );
+ 
+function extra_user_company_id( $user ) { ?>
+<h3><?php _e("Securitas WebService CompanyId", "blank"); ?></h3>
+ 
+<table class="form-table">
+<tr>
+<th><label for="idcompany"><?php _e("CompanyId"); ?></label></th>
+<td>
+<input type="text" name="idcompany" id="idcompany" value="<?php echo esc_attr( get_the_author_meta( 'idcompany', $user->ID ) ); ?>" class="regular-text" /><br />
+<span class="description"><?php _e("Please enter the company id used in your web service."); ?></span>
+</td>
+</tr>
+</table>
+<?php }
+ 
+add_action( 'personal_options_update', 'save_extra_user_company_id' );
+add_action( 'edit_user_profile_update', 'save_extra_user_company_id' );
+ 
+function save_extra_user_company_id( $user_id ) {
+ 
+if ( !current_user_can( 'edit_user', $user_id ) ) { return false; }
+ 
+update_user_meta( $user_id, 'idcompany', $_POST['idcompany'] );
+}
+?>

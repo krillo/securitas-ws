@@ -267,6 +267,34 @@ class LimeWService {
   }
   
   
+  
+  /**
+   * Translate position code to text and vice versa
+   * 
+   * @param type $type 'code' or 'text'
+   * @param type $arg   the parameter to be translated
+   * @return string 
+   */
+  public function positionTranslate($type, $arg) {
+    if ($type == 'code') {
+      $codeToName = array(
+          '2164001' => 'Administration',
+          '2161001' => 'Säljare',
+          '2163001' => 'Tekniker',
+          '3065001' => 'Annan');
+      return $codeToName[$arg];
+    } else {
+      $nameToCode = array(
+          'Administration' => '2164001',
+          'Säljare' => '2161001',
+          'Tekniker' => '2163001',
+          'Annan' => '3065001');
+      return $nameToCode[$arg];
+    }
+  }  
+  
+  
+  
   /**
    * This function will do the actual WS lookup and handle logging and errors
    * Supply the query (params) and the type of query to be executed
@@ -363,10 +391,12 @@ class LimeWService {
 
   /**
    * Update or insert a record into Person
+   * Position is defaulted to '3065001' which translates to 'other'
+   * Ended is defaulted to 0 which translates to 'not ended' 
    *
    * @return <type>
    */
-  public function updatePerson($firstname,$familyname,$cellphone,$email,$idperson,$admin,$lc,$portal, $idcompany='6016001', $position='', $ended='') {
+  public function updatePerson($firstname,$familyname,$cellphone,$email,$idperson,$admin,$lc,$portal, $idcompany='6016001', $position='3065001', $ended='0') {
     $params = array('data' =>
         '<data>
               <person
