@@ -67,12 +67,22 @@ class SecuritasWS {
         url: "' . $actionFile . '",
         data: "idperson=" + idperson,
         success: function(data){         
-          jQuery("#success").html("Delete successful");
+          //jQuery("#success").html("Delete successful");
+          window.location.reload();
         }
       });
       return false;
   }
-  
+
+
+  function editPerson(idperson){
+    //alert(idperson);    
+    window.location.href = "/staff/edit-staff?idperson=" + idperson;    
+  }
+//staff/edit-staff/
+
+
+
 </script>
 ';
 
@@ -106,7 +116,7 @@ class SecuritasWS {
         $output .= '<div id="staff-buttons">';
         $output .= '<input type="hidden" value="' . $value->attributes()->idperson . '" /><span><br />';
         $output .= '<input class="wpcf7-submit" type="button" value="X" onclick="deletePerson(' . $value->attributes()->idperson . ');return false;" /><span><br />';
-        $output .= '<input class="wpcf7-submit" type="button" value="Edit" /></span>';
+        $output .= '<input class="wpcf7-submit" type="button" value="Edit"  onclick="editPerson(' . $value->attributes()->idperson . ');return false;"/></span>';
         $output .= '</div>';
         $output .= '</div>';
         $output .= '</li>';
@@ -170,7 +180,7 @@ class SecuritasWS {
   });
 </script>';
 
-    
+
     $portal = '';
     $elegible = '';
     $admin = '';
@@ -213,7 +223,7 @@ class SecuritasWS {
           break;
       }
       //$position = $this->lime->positionTranslate('code', $arg)
-      
+
       $output = '<div id="list-staff">';
       $output .= '<ul>';
       $output .= '<li>';
@@ -232,10 +242,10 @@ class SecuritasWS {
       $output .= '<div class="pp-select">';
       $output .= '<div class="labels"><label for="position">Choose role</label></div>';
       $output .= '<select id="position">';
-      $output .= '<option value="2161001" '. $sales .'>Sales</option>';
-      $output .= '<option value="2163001" '. $technician .'>Technician</option>';
-      $output .= '<option value="2164001" '. $marketing .'>Marketing</option>';
-      $output .= '<option value="3065001" '. $other .'>Other</option>';
+      $output .= '<option value="2161001" ' . $sales . '>Sales</option>';
+      $output .= '<option value="2163001" ' . $technician . '>Technician</option>';
+      $output .= '<option value="2164001" ' . $marketing . '>Marketing</option>';
+      $output .= '<option value="3065001" ' . $other . '>Other</option>';
       $output .= '</select>';
       $output .= '</div>';
       $output .= '<div>';
@@ -275,8 +285,6 @@ class SecuritasWS {
     }
     echo $output;
   }
-
-
 
   /**
    * Return the markup to add a person by companyId
@@ -469,9 +477,9 @@ function securitasWSdebugOutput() {
   $lime->debugOutput();
 }
 
-/**************************************
+/* * ************************************
  * Wordpress admin pages
- *************************************/
+ * *********************************** */
 
 add_action('admin_menu', 'lime_plugin_menu');  //network_admin_menu
 
@@ -503,38 +511,53 @@ function wSOptionsPage() {
   echo '</div>';
 }
 
-
-
-
-/*******************************************
+/* * *****************************************
  * Wordpress admin - extra companyId field 
- *******************************************/
+ * ***************************************** */
 
+add_action('show_user_profile', 'extra_user_company_id');
+add_action('edit_user_profile', 'extra_user_company_id');
 
-add_action( 'show_user_profile', 'extra_user_company_id' );
-add_action( 'edit_user_profile', 'extra_user_company_id' );
- 
-function extra_user_company_id( $user ) { ?>
-<h3><?php _e("Securitas WebService CompanyId", "blank"); ?></h3>
- 
-<table class="form-table">
-<tr>
-<th><label for="idcompany"><?php _e("CompanyId"); ?></label></th>
-<td>
-<input type="text" name="idcompany" id="idcompany" value="<?php echo esc_attr( get_the_author_meta( 'idcompany', $user->ID ) ); ?>" class="regular-text" /><br />
-<span class="description"><?php _e("Please enter the company id used in your web service."); ?></span>
-</td>
-</tr>
-</table>
-<?php }
- 
-add_action( 'personal_options_update', 'save_extra_user_company_id' );
-add_action( 'edit_user_profile_update', 'save_extra_user_company_id' );
- 
-function save_extra_user_company_id( $user_id ) {
- 
-if ( !current_user_can( 'edit_user', $user_id ) ) { return false; }
- 
-update_user_meta( $user_id, 'idcompany', $_POST['idcompany'] );
+function extra_user_company_id($user) {
+  $technician = '';
+  if (get_the_author_meta('technician', $user->ID) == '1') {
+    $technician = 'checked';
+  }
+  ?>
+<?php if(current_user_can('administrator')): ?>
+  <h3><?php _e("Securitas WebService Settings", "blank"); ?></h3>
+  <table class="form-table">
+    <tr>
+      <th><label for="idcompany"><?php _e("CompanyId"); ?></label></th>
+      <td>
+        <input type="text" name="idcompany" id="idcompany" value="<?php echo esc_attr(get_the_author_meta('idcompany', $user->ID)); ?>" class="regular-text" />
+        <span class="description"><?php _e("Please enter the company id used in your web service."); ?></span>
+      </td>
+    </tr>
+    <tr>
+      <th><label for="technician"><?php _e("Technician administrator"); ?></label></th>
+      <td>
+        <input type="checkbox" name="technician" id="technician" value="1" <?php echo $technician; ?>/>
+        <span class="description"><?php _e("User can add and remove personel."); ?></span>
+      </td>
+    </tr>
+  </table>
+<?php endif; ?>  
+  <?php
+}
+
+add_action('personal_options_update', 'save_extra_user_company_id');
+add_action('edit_user_profile_update', 'save_extra_user_company_id');
+
+function save_extra_user_company_id($user_id) {
+  if (!current_user_can('edit_user', $user_id)) {
+    return false;
+  }
+  if (isset($_POST['idcompany'])) {
+    update_user_meta($user_id, 'idcompany', $_POST['idcompany']);
+  }
+  if (isset($_POST['technician'])) {
+    update_user_meta($user_id, 'technician', $_POST['technician']);
+  }
 }
 ?>
