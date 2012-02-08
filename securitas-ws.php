@@ -25,16 +25,20 @@
  */
 class SecuritasWS {
 
+  const debug = true;
+
+  public $logFile = null;
   //plugin db version
   public static $myDbVersion = "0.1";
   public $lime = null;
 
   function __construct() {
+    $this->logFile = __DIR__ . '/ws.log';
     global $wpdb;
     $url = null;
-    $url = get_option("lime_url");  //https://limehosting.se:5797/meta
+    $url = get_option("sec_lime_url");
     if (!isset($url)) {
-      echo 'ERROR no url to Lime service set';
+      echo 'ERROR no url to web service set';
     } else {
       include_once 'LimeWService.php';
       $this->lime = new LimeWService($url);
@@ -61,8 +65,9 @@ class SecuritasWS {
     echo '
 <script type="text/javascript">
   function deletePerson(idperson){
-    //alert(idperson);    
-     jQuery.ajax({
+    var answer = confirm ("Do you want to remove the user?")
+    if (answer){
+        jQuery.ajax({
         type: "POST",
         url: "' . $actionFile . '",
         data: "idperson=" + idperson,
@@ -71,6 +76,9 @@ class SecuritasWS {
           window.location.reload();
         }
       });
+    } else{
+      return false;
+    }
       return false;
   }
 
@@ -89,6 +97,22 @@ class SecuritasWS {
 
     $output = '<ul>';
     foreach ($response as $value) {
+      //the checkboxes
+      $portal = '';
+      $lc = '';
+      $admin = '';
+      if ($value->attributes()->authorizedportal == '1') {
+        //echo "Portal";
+        $portal = ' checked ';
+      }
+      if ($value->attributes()->authorizedarc == '1') {
+        //echo "LC";
+        $lc = ' checked ';
+      }
+      if ($value->attributes()->admninrights == '1') {
+        //echo "admin";
+        $admin = ' checked ';
+      }
       if ($value->attributes()->ended == '0') {
         $position = "position.text";
         $output .= '<li>';
@@ -110,7 +134,9 @@ class SecuritasWS {
         $output .= '<p>' . $value->attributes()->cellphone . '</p>';
         $output .= '</div>';
         $output .= '<div><strong>Eligibility</strong>';
-        $output .= '<p>' . $value->attributes()->authorizedarc . '</p>';
+        $output .= '<input type="checkbox" disabled ' . $lc . '> LC';
+        $output .= '<input type="checkbox" disabled ' . $portal . '> Portal';
+        $output .= '<input type="checkbox" disabled ' . $admin . '> Administrator';
         $output .= '</div>';
         $output .= '</div>';
         $output .= '<div id="staff-buttons">';
@@ -149,8 +175,11 @@ class SecuritasWS {
       var cellphone = jQuery("#cellphone").val();
       var email = jQuery("#email").val();
       var idperson = jQuery("#idperson").val();    
+      var idcompany = jQuery("#idcompany").val();    
+      var original_lc = jQuery("#original_lc").val();    
       var position = jQuery("#position").val(); 
-      //alert("firstname: " + firstname + " familyname: " + familyname + " cellphone: " + cellphone + " email: " + email + " idperson: " + idperson + " &position=" + position);
+      //alert("firstname: " + firstname + " familyname: " + familyname + " cellphone: " + cellphone +
+      //" email: " + email + " idperson: " + idperson + " &position=" + position);
 
       //get the checkboxes default them to 0
       var admin = jQuery("#admin:checked").val();
@@ -162,7 +191,8 @@ class SecuritasWS {
       //alert("admin: " + admin + " lc: " + lc + " portal: " + portal);
       
       dataString = "firstname=" + firstname + "&familyname=" + familyname + "&cellphone=" + cellphone + "&email=" + email
-                    + "&idperson=" + idperson + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal + "&position=" + position;
+                    + "&idperson=" + idperson + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal + "&position=" + position
+                    + "&position=" + position + "&idcompany=" + idcompany + "&original_lc=" + original_lc;
       jQuery.ajax({
             type: "POST",
             url: "' . $actionFile . '",
@@ -272,6 +302,8 @@ class SecuritasWS {
       $output .= '<p><!--staff-info--></p>';
       $output .= '<div class="staff-buttons">';
       $output .= '<input type="hidden" name="idperson" id="idperson" value="' . $value->attributes()->idperson . '">';
+      $output .= '<input type="hidden" name="idcompany" id="idcompany" value="' . get_the_author_meta('idcompany') . '">';
+      $output .= '<input type="hidden" name="original_lc" id="original_lc" value="' . $value->attributes()->authorizedarc . '">';
       $output .= '<input type="submit" class="wpcf7-submit" id="save-person" value="Save">';
       $output .= '</div>';
       $output .= '</fieldset>';
@@ -307,7 +339,9 @@ class SecuritasWS {
       var email = jQuery("#email").val();
       var idcompany = jQuery("#idcompany").val();
       var position = jQuery("#position").val(); 
-      alert("firstname: " + firstname + " familyname: " + familyname + " cellphone: " + cellphone + " email: " + email + " idcompany: " + idcompany + " &position=" + position);
+      //alert("firstname: " + firstname + " familyname: " + familyname + " cellphone: " + cellphone + " email: " + email
+      //+ " idcompany: " + idcompany + " &position=" + position);
+
 
       //get the checkboxes default them to 0
       var admin = jQuery("#admin:checked").val();
@@ -404,6 +438,9 @@ class SecuritasWS {
    * Update person in WS, requires $idperson
    * An insert requires companyId and -1 as $idperson  
    * 
+   * If lc-eligibility is changed then send an email to securitas
+   * If portal is 1 then create the user and send email to her
+   * 
    * @param type $firstname
    * @param type $familyname
    * @param type $cellphone
@@ -417,12 +454,161 @@ class SecuritasWS {
    * @param type $ended
    * @return type 
    */
-  public function updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended) {
-    return $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended);
+  public function updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $original_lc, $portal, $idcompany, $position, $ended) {
+    $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended);
+    if ($success) {
+      //echo '$original_lc: '. $original_lc . ' lc: ' .$lc;      
+      if ($original_lc != $lc) {  //the LC eligibility has been changed, send mail to securitas 
+        $this->sendEmail('lc', $firstname, $familyname, $cellphone, $email, $lc, $portal);
+      }
+      if ($portal == 1) {
+        $userData = $this->createUser($email);
+        if(isset($userData)){
+          print_r($userData);
+        }
+        
+      }
+    }
   }
 
+  /**
+   * Delete the person
+   * 
+   * @param type $idperson
+   * @return type 
+   */
   public function deletePerson($idperson) {
     return $this->lime->deletePerson($idperson);
+  }
+
+  /**
+   * Send email
+   * There are two $type of mail: 'lc' or 'portal'
+   * LC - them send an email to securitas for noting that LC eligibility has changed
+   * PORTAL - send an invite email to the person just added to WordPress 
+   */
+  public function sendEmail($type, $firstname, $familyname, $cellphone, $email, $lc, $portal) {
+    require_once(__DIR__ . '/../../../wp-config.php');
+    global $current_user;
+    $user_id = $current_user->ID;
+    $user_email = $current_user->data->user_email;
+    $user_firstname = get_user_meta($user_id, 'first_name', true);
+    $user_lastname = get_user_meta($user_id, 'last_name', true);
+    $user_company = get_user_meta($user_id, 'sec_companyname', true);
+
+    switch ($type) {
+      case 'lc':
+        echo ", inne i sendEmail";
+        $lcAcess = 'NO ACCESS';
+        if ($lc == '1') {
+          $lcAcess = 'ACCESS';
+        }
+
+        $subject = "LC eligibility changed";
+        $message = "LC eligibility changed to <strong>$lcAcess</strong> for: <br><br>";
+        $message .= "Company: $user_company <br>";
+        $message .= "Name: $firstname $familyname <br>";
+        $message .= "Email: $email <br>";
+        $message .= "Mobile: $cellphone <br><br><br>";
+        $message .= "The person who did this change is: <br><br>";
+        $message .= "Company: $user_company <br>";
+        $message .= "Name: $user_firstname $user_lastname <br>";
+        $message .= "Email: $user_email <br>";
+
+        $to = get_option('sec_support_email'); //'kundtjanst.alert@securitas.se';
+        $from = get_option('sec_support_email_sender');
+        break;
+      case 'portal':
+
+        $subject = "LC eligibility changed";
+        $message = "LC eligibility changed to for: <br>";
+        $message .= "$firstname $familyname <br>";
+        $message .= "$email <br>";
+        $message .= "$cellphone <br><br><br>";
+        $message .= "The person who did this change is: <br>";
+        $message .= "$firstname $familyname <br>";
+        $message .= "$email <br>";
+        $message .= "$cellphone <br><br>";
+
+        $to = 'krillo@gmail.com';
+        $from = 'noreply-partner-portal@securitas.com';
+
+        break;
+      default:
+        $this->saveToFile($this->logFile, 'Error sending email, 1', 'ERROR');
+        return;
+        break;
+    }
+
+    if ($to != "" && $message != "") {
+      $headers = 'To: ' . $to . ' <' . $to . '>' . "\r\n";
+      $headers .= 'From: ' . $from . ' <' . $from . '>' . "\r\n";
+      $headers .= 'MIME-Version: 1.0' . "\r\n";
+      $headers .= 'Content-type: text/html; charset=UTF-8' . '\r\n';
+
+      $success = mail($to, $subject, $message, $headers);
+      if ($success):
+        $msg = "Email ($subject)sent to $to";
+        $this->saveToFile($this->logFile, $msg, 'INFO');
+        echo 'success';
+      else:
+        $this->saveToFile($this->logFile, 'Error sending email, 2', 'ERROR');
+        echo 'error';
+      endif;
+    }
+  }
+  
+  /**
+   * Create a valid wordpress username from the email address, i.e without any funky chars
+   * @param type $email
+   * @return type 
+   */
+  function createUserName($email = "") {
+    $email = trim($email);
+    $email = str_replace(" ", "", $email);
+    $email = preg_replace("[\.]", "", $email);    
+    $email = preg_replace("#[\;\#\n\r\*\'\"<>&\%\!\(\)\{\}\[\]\?\\/\s]#", "", $email);
+    $email = preg_replace("[@]", "2", $email);
+    return $email;    
+  }
+
+  /**
+   * Create a wordpress user
+   */
+  public function createUser($user_email) {
+    try{
+    $user_name = $this->createUserName($user_email);
+    $user_id = username_exists($user_name);
+    if (!$user_id) {
+      $random_password = wp_generate_password(8, false);
+      $user_id = wp_create_user($user_name, $random_password, $user_email);
+      $userData = array('user_id'=> $user_id, 'user_name'=> $user_name, 'password'=> $random_password);
+      $msg = "A new user was created, user name: $user_name, password: $random_password, email: $user_email, user id: $user_id";
+      $this->saveToFile($this->logFile, $msg, 'INFO');
+      return $userData;      
+    } else {
+      $msg = "Could not create a new user email: $user_email";
+      $this->saveToFile($this->logFile, $msg, 'ERROR');
+      return false;
+    }
+    } catch (exception $e) {
+      die($e->getmessage());
+    }
+  }
+
+  /**
+   * Appends data to (log-)file
+   * It only writes if debug is enabled
+   * 
+   * @param <type> $data
+   */
+  public function saveToFile($filename, $data, $type = 'INFO') {
+    if (self::debug) {
+      $fh = fopen($filename, 'a') or die("can't open file");
+      fwrite($fh, "\n" . date('Y-m-d H:m:s') . ' [' . $type . '] ');
+      fwrite($fh, $data);
+      fclose($fh);
+    }
   }
 
 }
@@ -491,22 +677,35 @@ function wSOptionsPage() {
   if (!current_user_can('manage_options')) {
     wp_die(__('You do not have sufficient permissions to access this page.'));
   }
-  $lime_url = get_option('lime_url');
+  $updated = false;
+  $lime_url = get_option('sec_lime_url');
+  $support_email = get_option('sec_support_email');
+  $support_email_sender = get_option('sec_support_email_sender');
   if (isset($_POST['lime_url'])) {
     $lime_url = $_POST['lime_url'];
-    update_option('lime_url', $lime_url);
+    update_option('sec_lime_url', $lime_url);
+    $updated = true;
+  }
+  if (isset($_POST['support_email'])) {
+    $support_email = $_POST['support_email'];
+    update_option('sec_support_email', $support_email);
+    $updated = true;
+  }
+  if (isset($_POST['support_email_sender'])) {
+    $support_email_sender = $_POST['support_email_sender'];
+    update_option('sec_support_email_sender', $support_email_sender);
+    $updated = true;
+  }
+  if ($updated) {
     echo '<div class="updated"><p><strong>Updated the URL</strong></p></div>';
   }
   echo '<div class="wrap">';
-  echo '<p>The Lime Web Service URL</p>';
   echo '<form name="form1" method="post" action="">';
   echo '<input type="hidden" name="hidden_field" value="Y">';
-  echo '<p>';
-  echo '  <input type="text" name="lime_url" value="' . $lime_url . '" size="100">';
-  echo '</p><hr />';
-  echo '<p class="submit">';
-  echo '  <input type="submit" name="Submit" class="button-primary" value="Save Changes" />';
-  echo '</p>';
+  echo '<p><input type="text" name="lime_url" value="' . $lime_url . '" size="50"> &nbsp; The Lime Web Service URL</p>';
+  echo '<p><input type="text" name="support_email" value="' . $support_email . '" size="50">  &nbsp; The Securitas support email address</p>';
+  echo '<p><input type="text" name="support_email_sender" value="' . $support_email_sender . '" size="50">  &nbsp; The Securitas support email senders name and email. E.g. noreply@securitas.com </p>';
+  echo '<p class="submit"> <input type="submit" name="Submit" class="button-primary" value="Save Changes" /></p>';
   echo '</form>';
   echo '</div>';
 }
@@ -520,29 +719,36 @@ add_action('edit_user_profile', 'extra_user_company_id');
 
 function extra_user_company_id($user) {
   $technician = '';
-  if (get_the_author_meta('technician', $user->ID) == '1') {
+  if (get_the_author_meta('sec_technician', $user->ID) == '1') {
     $technician = 'checked';
   }
   ?>
-<?php if(current_user_can('administrator')): ?>
-  <h3><?php _e("Securitas WebService Settings", "blank"); ?></h3>
-  <table class="form-table">
-    <tr>
-      <th><label for="idcompany"><?php _e("CompanyId"); ?></label></th>
-      <td>
-        <input type="text" name="idcompany" id="idcompany" value="<?php echo esc_attr(get_the_author_meta('idcompany', $user->ID)); ?>" class="regular-text" />
-        <span class="description"><?php _e("Please enter the company id used in your web service."); ?></span>
-      </td>
-    </tr>
-    <tr>
-      <th><label for="technician"><?php _e("Technician administrator"); ?></label></th>
-      <td>
-        <input type="checkbox" name="technician" id="technician" value="1" <?php echo $technician; ?>/>
-        <span class="description"><?php _e("User can add and remove personel."); ?></span>
-      </td>
-    </tr>
-  </table>
-<?php endif; ?>  
+  <?php if (current_user_can('administrator')): ?>
+    <h3><?php _e("Securitas WebService Settings", "blank"); ?></h3>
+    <table class="form-table">
+      <tr>
+        <th><label for="idcompany"><?php _e("CompanyId"); ?></label></th>
+        <td>
+          <input type="text" name="idcompany" id="idcompany" value="<?php echo esc_attr(get_the_author_meta('sec_idcompany', $user->ID)); ?>" class="regular-text" />
+          <span class="description"><?php _e("Please enter the company id used in your web service."); ?></span>
+        </td>
+      </tr>
+      <tr>
+        <th><label for="companyname"><?php _e("Company name"); ?></label></th>
+        <td>
+          <input type="text" name="companyname" id="companyname" value="<?php echo esc_attr(get_the_author_meta('sec_companyname', $user->ID)); ?>" class="regular-text" />
+          <span class="description"><?php _e("Please enter the company name."); ?></span>
+        </td>
+      </tr>      
+      <tr>
+        <th><label for="technician"><?php _e("Technician administrator"); ?></label></th>
+        <td>
+          <input type="checkbox" name="technician" id="technician" value="1" <?php echo $technician; ?>/>
+          <span class="description"><?php _e("User can add and remove personel."); ?></span>
+        </td>
+      </tr>
+    </table>
+  <?php endif; ?>  
   <?php
 }
 
@@ -554,10 +760,13 @@ function save_extra_user_company_id($user_id) {
     return false;
   }
   if (isset($_POST['idcompany'])) {
-    update_user_meta($user_id, 'idcompany', $_POST['idcompany']);
+    update_user_meta($user_id, 'sec_idcompany', $_POST['idcompany']);
+  }
+  if (isset($_POST['companyname'])) {
+    update_user_meta($user_id, 'sec_companyname', $_POST['companyname']);
   }
   if (isset($_POST['technician'])) {
-    update_user_meta($user_id, 'technician', $_POST['technician']);
+    update_user_meta($user_id, 'sec_technician', $_POST['technician']);
   }
 }
 ?>

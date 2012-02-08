@@ -10,8 +10,6 @@ $idcompany = $_POST['idcompany'];
 $position = $_POST['position'];
 $ended = $_POST['ended'];
 require_once(__DIR__ . '/../../../wp-config.php');
-require_once('securitas-lime.php');
+require_once('securitas-ws.php');
 $lime = new SecuritasWS();
-//$lime->updatePerson($firstname,$familyname,$cellphone,$email,$idperson,$admin,$lc,$portal, $idcompany, $position, $ended);
 $lime->updatePerson($firstname,$familyname,$cellphone,$email,'-1',$admin,$lc,$portal, $idcompany, $position, '0');  //always set ended to 0 when its an "add person"
-//$lime->debugOutput();

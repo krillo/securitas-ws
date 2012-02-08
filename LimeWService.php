@@ -4,12 +4,14 @@
  *
  */
 class LimeWService {
+
   const debug = true;
+
   public $client = null;
   public $logFile = null;
 
   public function __construct($url) {
-    $this->logFile = __DIR__ . '/lime.log';
+    $this->logFile = __DIR__ . '/ws.log';
     ini_set('soap.wsdl_cache', WSDL_CACHE_NONE);
     $options = array(
         'trace' => 1,
@@ -200,7 +202,6 @@ class LimeWService {
     }
   }
 
-
   /**
    * Select person by id
    * @param <type> $personId
@@ -241,33 +242,28 @@ class LimeWService {
     }
   }
 
-  
-  
-  
-    /**
+  /**
    * Select person by id
    * @param <type> $personId
    * @return <type>
    */
   public function deletePerson($idperson) {
     if (isset($idperson)) {
-   $params = array('data' =>
-        '<data>
+      $params = array('data' =>
+          '<data>
            <person
-             idperson="'.$idperson.'"
+             idperson="' . $idperson . '"
              ended="1"
            />
          </data>'
-    );
+      );
       $xml = $this->doWSQuery($params, 'update', 'deletePerson()');
       return $xml;
     } else {
       $this->saveToFile($this->logFile, 'Exception in deletePerson(). No personId ', 'ERROR');
     }
   }
-  
-  
-  
+
   /**
    * Translate position code to text and vice versa
    * 
@@ -291,10 +287,8 @@ class LimeWService {
           'Annan' => '3065001');
       return $nameToCode[$arg];
     }
-  }  
-  
-  
-  
+  }
+
   /**
    * This function will do the actual WS lookup and handle logging and errors
    * Supply the query (params) and the type of query to be executed
@@ -311,17 +305,17 @@ class LimeWService {
         $this->saveToFile($this->logFile, print_r($params, true), 'DEBUG');
       }
       switch ($queryType) {
-    case 'select':
-        $response = $this->client->GetXmlQueryData($params);
-        break;
-    case 'update':
-        $response = $this->client->UpdateData($params);
-        break;
-    case 'databaseschema':
-        $response = $this->client->GetDatabaseSchema($params);
-        break;
-}
-      
+        case 'select':
+          $response = $this->client->GetXmlQueryData($params);
+          break;
+        case 'update':
+          $response = $this->client->UpdateData($params);
+          break;
+        case 'databaseschema':
+          $response = $this->client->GetDatabaseSchema($params);
+          break;
+      }
+
       $this->saveToFile($this->logFile, $this->client->__getLastResponse(), 'INFO');
       $response = $this->client->__getLastResponse();
       $xml = $this->responseToSimpleXML($response, $queryType);
@@ -396,45 +390,34 @@ class LimeWService {
    *
    * @return <type>
    */
-  public function updatePerson($firstname,$familyname,$cellphone,$email,$idperson,$admin,$lc,$portal, $idcompany='6016001', $position='3065001', $ended='0') {
-    $params = array('data' =>
-        '<data>
+  public function updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position = '3065001', $ended = '0') {
+    if (isset($idperson)) {
+      $params = array('data' =>
+          '<data>
               <person
-                idperson="'.$idperson.'"
-                firstname="'.$firstname.'"
-                familyname="'.$familyname.'"
-                company="'.$idcompany.'"
-                ended="'.$ended.'"
-                position="'.$position.'"
-                email="'.$email.'"
-                cellphone="'.$cellphone.'"
-                authorizedarc="'.$lc.'"
-                authorizedportal="'.$portal.'"
-                admninrights="'.$admin.'"
+                idperson="' . $idperson . '"
+                firstname="' . $firstname . '"
+                familyname="' . $familyname . '"
+                company="' . $idcompany . '"
+                ended="' . $ended . '"
+                position="' . $position . '"
+                email="' . $email . '"
+                cellphone="' . $cellphone . '"
+                authorizedarc="' . $lc . '"
+                authorizedportal="' . $portal . '"
+                admninrights="' . $admin . '"
               />
             </data>'
-    );
-    try {
-      if (self::debug) {
-        $this->saveToFile("lime.log", print_r($params, true), 'DEBUG');
-      }
-      $response = $this->client->UpdateData($params);
-      $this->saveToFile("lime.log", $this->client->__getLastResponse(), 'INFO');
-      $response = $this->client->__getLastResponse();
-      $xml = $this->responseToSimpleXML($response, 'update');
-      return $xml;
-    } catch (exception $e) {
-      $this->saveToFile("lime.log", 'Exception in updatePerson()', 'ERROR');
-      $this->saveToFile("lime.log", $e->getmessage(), 'ERROR');
-      echo "Exception in updatePerson()<br>";
-      die($e->getmessage());
+      );
+      $xml = $this->doWSQuery($params, 'update', 'updatePerson()');
+      //return $xml;
+      return true;
+    } else {
+      $this->saveToFile($this->logFile, 'Exception in updatePerson(). No personId ', 'ERROR');
+      return false;
     }
   }
 
-  
-  
-  
-  
   /**
    * Convert the response to simpleXML object
    * @param <type> $response
@@ -476,14 +459,18 @@ class LimeWService {
   }
 
   /**
-   * Appends data to logfile
+   * Appends data to (log-)file
+   * It only writes if debug is enabled
+   * 
    * @param <type> $data
    */
   public function saveToFile($filename, $data, $type = 'INFO') {
-    $fh = fopen($filename, 'a') or die("can't open file");
-    fwrite($fh, "\n" . date('Y-m-d H:m:s') . ' [' . $type . '] ');
-    fwrite($fh, $data);
-    fclose($fh);
+    if (self::debug) {
+      $fh = fopen($filename, 'a') or die("can't open file");
+      fwrite($fh, "\n" . date('Y-m-d H:m:s') . ' [' . $type . '] ');
+      fwrite($fh, $data);
+      fclose($fh);
+    }
   }
 
   public function debug() {
