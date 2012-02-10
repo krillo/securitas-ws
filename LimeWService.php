@@ -103,10 +103,12 @@ class LimeWService {
 
   /**
    * Select from company
+   * $count is defaulted to 0 which means get all posts
+   * 
    * @param <type> $count
    * @return <type>
    */
-  public function selectFromCompany($id, $count = 10) {
+  public function selectFromCompany($id, $count = 0) {
     if (isset($id)) {
       $params = array('query' =>
           '<query distinct="0" top="' . $count . '">

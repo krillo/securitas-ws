@@ -16,7 +16,7 @@ get_header();
             <div id="main">                     
 <?php woo_loop_before();  ?>
 	
-     <?php  if(get_the_author_meta('technician', get_current_user_id()) == '1'):  ?>         
+     <?php  if(get_the_author_meta('sec_technician', get_current_user_id()) == '1'):  ?>         
         <?php while (have_posts()) : the_post(); ?>
             <?php woo_get_template_part('content', 'page'); ?>
             <?php 

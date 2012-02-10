@@ -19,7 +19,7 @@ get_header();
       <?php  if(get_the_author_meta('technician', get_current_user_id()) == '1'):  ?>
         <?php while (have_posts()) : the_post(); ?>
             <?php woo_get_template_part('content', 'page'); ?>
-            <?php securitasWSaddStaff(get_the_author_meta('idcompany', get_current_user_id()));?>
+            <?php securitasWSaddStaff(get_the_author_meta('sec_idcompany', get_current_user_id()));?>
         <?php endwhile; ?>
       <? else: ?>
        Not allowed
