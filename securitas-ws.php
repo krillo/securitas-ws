@@ -61,15 +61,15 @@ class SecuritasWS {
     //var_dump($response);
     $pluginRoot = plugins_url("", __FILE__);
     $actionFile = $pluginRoot . "/api_lime_delete_person.php";
-    
+
     //access to edit?
     $fullAccess = false;
-    if(get_the_author_meta('sec_technician', get_current_user_id()) == '1'){
+    if (get_the_author_meta('sec_technician', get_current_user_id()) == '1') {
       $fullAccess = true;
     }
-    
-    if($fullAccess){
-    echo '
+
+    if ($fullAccess) {
+      echo '
 <script type="text/javascript">
   function deletePerson(idperson){
     var answer = confirm ("Do you want to remove the user?")
@@ -95,7 +95,7 @@ class SecuritasWS {
   
 </script>
 ';
-  }
+    }
 
     $output = '<ul>';
     foreach ($response as $value) {
@@ -141,7 +141,7 @@ class SecuritasWS {
         $output .= '<input type="checkbox" disabled ' . $admin . '> Administrator';
         $output .= '</div>';
         $output .= '</div>';
-        if($fullAccess){
+        if ($fullAccess) {
           $output .= '<div id="staff-buttons">';
           $output .= '<input type="hidden" value="' . $value->attributes()->idperson . '" /><span><br />';
           $output .= '<input class="wpcf7-submit" type="button" value="X" onclick="deletePerson(' . $value->attributes()->idperson . ');return false;" /><span><br />';
@@ -165,7 +165,7 @@ class SecuritasWS {
    */
   public function editPerson($personId) {
     $response = $this->lime->getPerson($personId);
-    //var_dump($response);
+    var_dump($response);
 
     $pluginRoot = plugins_url("", __FILE__);
     $actionFile = $pluginRoot . "/api_lime_update_person.php";
@@ -183,6 +183,7 @@ class SecuritasWS {
       var companyname = jQuery("#companyname").val();  
       var original_lc = jQuery("#original_lc").val();    
       var position = jQuery("#position").val(); 
+      var wpuserid = jQuery("#wpuserid").val();       
       //alert("firstname: " + firstname + " familyname: " + familyname + " cellphone: " + cellphone +
       //" email: " + email + " idperson: " + idperson + " &position=" + position);
 
@@ -197,7 +198,7 @@ class SecuritasWS {
       
       dataString = "firstname=" + firstname + "&familyname=" + familyname + "&cellphone=" + cellphone + "&email=" + email
                     + "&idperson=" + idperson + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal + "&position=" + position
-                    + "&position=" + position + "&idcompany=" + idcompany + "&companyname=" + companyname + "&original_lc=" + original_lc + "&ended=0";
+                    + "&position=" + position + "&idcompany=" + idcompany + "&companyname=" + companyname + "&original_lc=" + original_lc + "&ended=0" + "&wpuserid=" + wpuserid;
       jQuery.ajax({
             type: "POST",
             url: "' . $actionFile . '",
@@ -310,6 +311,7 @@ class SecuritasWS {
       $output .= '<input type="hidden" name="idcompany" id="idcompany" value="' . get_the_author_meta('sec_idcompany') . '">';
       $output .= '<input type="hidden" name="companyname" id="companyname" value="' . get_the_author_meta('sec_companyname') . '">';
       $output .= '<input type="hidden" name="original_lc" id="original_lc" value="' . $value->attributes()->authorizedarc . '">';
+      $output .= '<input type="hidden" name="wpuserid" id="wpuserid" value="' . $value->attributes()->wpuserid . '">';
       $output .= '<input type="submit" class="wpcf7-submit" id="save-person" value="Save">';
       $output .= '</div>';
       $output .= '</fieldset>';
@@ -462,71 +464,49 @@ class SecuritasWS {
    * @param type $ended
    * @return type 
    */
-  public function updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $original_lc, $portal, $idcompany, $companyname, $position, $ended) {
-    //do the update on the WS 
-    $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended);
+  public function updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $original_lc, $portal, $idcompany, $companyname, $position, $ended, $wpuserid) {
+    //do the update on the WS
+    $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $wpuserid);
     if ($success) {
-      $wpUserId = $this->getUserId();
-      
       $wpUserUpdated = false;
-      
+      $wpUserId = $wpuserid;
+      if ($wpUserId != 0) {   //person already wp-user, update the wp-data
+        update_user_meta($wpUserId, 'first_name', $firstname);
+        update_user_meta($wpUserId, 'last_name', $familyname);
+        update_user_meta($wpUserId, 'sec_companyname', $companyname);
+        update_user_meta($wpUserId, 'sec_idcompany', $idcompany);
+        update_user_meta($wpUserId, 'sec_technician', $admin);
+        $wpUserUpdated = true;
+      }
+
       if ($portal == 1) {   //if access to the portal then create a wp-user
-        $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin);   //creates a wp-user if not already wp-user
-        print_r($userData);
-        if(!gettype($userData)=='array'){  //user allready exists only update the data (userData is user_id)          
-          $wpUserId = $userData;
-          update_user_meta($wpUserId, 'first_name', $firstname);
-          update_user_meta($wpUserId, 'last_name', $familyname);
-          update_user_meta($wpUserId, 'sec_companyname', $companyname);
-          update_user_meta($wpUserId, 'sec_idcompany', $idcompany);      
-          update_user_meta($wpUserId, 'sec_technician', $admin); 
+        $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin);
+        //print_r($userData);
+        if (gettype($userData) == 'array') {  //the user was just created - send a welcome email   
           $wpUserUpdated = true;
-        } else { //the user was just created - send a welcome email  ()          
           $this->sendEmail('portal', $firstname, $familyname, $cellphone, $email, $lc, $portal, $userData);
-          $wpUserUpdated = true;
-        }   
+          //add the wpuserid to the WebService
+          $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $userData['user_id']);
+        } 
       }
-      if ($original_lc != $lc) {  //the LC eligibility has been changed, send mail to securitas OR lc access to newly added person 
+            
+     if ($admin == 1) {   //if adminster the portal then create a wp-user
+        $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin);
+        print_r($userData);
+        if (gettype($userData) == 'array') {  //the user was just created update WebService with wpuserid  
+          $wpUserUpdated = true;
+          $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $userData['user_id']);
+        } 
+      }      
+
+  
+      if ($original_lc != $lc) {  //the LC eligibility has been changed, send mail to securitas
         $this->sendEmail('lc', $firstname, $familyname, $cellphone, $email, $lc, $portal);
       }
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      if ($portal == 1) {   //if portal then create a user
-        $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin);   //creates a wp-user if not already wp-user
-        print_r($userData);
-        if(!gettype($userData)=='array'){
-          //user allready exists only update the data (userData is user_id)
-          $user_id = $userData;
-          update_user_meta($user_id, 'first_name', $firstname);
-          update_user_meta($user_id, 'last_name', $familyname);
-          update_user_meta($user_id, 'sec_companyname', $companyname);
-          update_user_meta($user_id, 'sec_idcompany', $idcompany);      
-          update_user_meta($user_id, 'sec_technician', $admin);  
-        } else {
-          //new user, send email
-          $this->sendEmail('portal', $firstname, $familyname, $cellphone, $email, $lc, $portal, $userData);
-        }   
-      }   
-      if ($original_lc != $lc || ($idperson == -1 && $lc == 1)) {  //the LC eligibility has been changed, send mail to securitas OR lc access to newly added person 
-        $this->sendEmail('lc', $firstname, $familyname, $cellphone, $email, $lc, $portal);
-      }    
+          
     }
   }
 
-  
-  
   /**
    * Delete the person
    * 
@@ -577,15 +557,15 @@ class SecuritasWS {
         $username = $userData['user_name'];
         $password = $userData['password'];
         $url = get_bloginfo('url');
-        
+
         $subject = "Welcome to Securitas Partner Portal";
         $message = "Hej $firstname $familyname <br>";
         $message .= "Du har registrerats som användare på Securitas larmcentrals parterportal. <br><br>";
-        $message .= '<a href="'.$url.'">'.$url.'</a><br><br>';
+        $message .= '<a href="' . $url . '">' . $url . '</a><br><br>';
         $message .= "Ditt användarnamn är $username och lösenordet är $password<br>";
 
         $to = $email;
-        $from = 'noreply-partner-portal@securitas.com';
+        $from = get_option('sec_support_email_sender');
 
         break;
       default:
@@ -611,7 +591,7 @@ class SecuritasWS {
       endif;
     }
   }
-  
+
   /**
    * Create a valid wordpress username from the email address, i.e without any funky chars
    * @param type $email
@@ -620,12 +600,11 @@ class SecuritasWS {
   function createUserName($email = "") {
     $email = trim($email);
     $email = str_replace(" ", "", $email);
-    $email = preg_replace("[\.]", "", $email);    
+    $email = preg_replace("[\.]", "", $email);
     $email = preg_replace("#[\;\#\n\r\*\'\"<>&\%\!\(\)\{\}\[\]\?\\/\s]#", "", $email);
     $email = preg_replace("[@]", "2", $email);
-    return $email;    
+    return $email;
   }
-
 
   /**
    * Create a wordpress user with all user and company attributes from securitas-WS
@@ -639,34 +618,32 @@ class SecuritasWS {
    * @return array 
    */
   public function createUser($user_email, $first_name, $family_name, $idcompany, $companyname, $admin) {
-    try{
-    $user_name = $this->createUserName($user_email);
-    $user_id = username_exists($user_name);
-    if (!$user_id) {
-      $random_password = wp_generate_password(8, false);
-      $user_id = wp_create_user($user_name, $random_password, $user_email);
-      update_user_meta($user_id, 'first_name', $first_name);
-      update_user_meta($user_id, 'last_name', $family_name);
-      add_user_meta($user_id, 'sec_companyname', $companyname);
-      add_user_meta($user_id, 'sec_idcompany', $idcompany);      
-      add_user_meta($user_id, 'sec_technician', $admin);  
-      
-      $msg = "A new user was created for $companyname, $idcompany, user name: $user_name, password: $random_password, email: $user_email, user id: $user_id";
-      $this->saveToFile($this->logFile, $msg, 'INFO');
-      $userData = array('user_id'=> $user_id, 
-                        'user_name' => $user_name, 
-                        'password' => $random_password,
-                        'first_name' => $first_name,
-                        'last_name' => $family_name,
-                        'sec_companyname' => $companyname,
-                        'sec_idcompany' => $idcompany, 
-                        'sec_technician' => $admin);
-      return $userData;      
-    } else {
-      //$msg = "User already exists, email: $user_email, user_id: $user_id";
-      //$this->saveToFile($this->logFile, $msg, 'WARN');
-      return $user_id;
-    }
+    try {
+      $user_name = $this->createUserName($user_email);
+      $user_id = username_exists($user_name);
+      if (!$user_id) {  //new wp-user
+        $random_password = wp_generate_password(8, false);
+        $user_id = wp_create_user($user_name, $random_password, $user_email);
+        update_user_meta($user_id, 'first_name', $first_name);
+        update_user_meta($user_id, 'last_name', $family_name);
+        add_user_meta($user_id, 'sec_companyname', $companyname);
+        add_user_meta($user_id, 'sec_idcompany', $idcompany);
+        add_user_meta($user_id, 'sec_technician', $admin);
+
+        $msg = "A new user was created for $companyname, $idcompany, user name: $user_name, password: $random_password, email: $user_email, user id: $user_id";
+        $this->saveToFile($this->logFile, $msg, 'INFO');
+        $userData = array('user_id' => $user_id,
+            'user_name' => $user_name,
+            'password' => $random_password,
+            'first_name' => $first_name,
+            'last_name' => $family_name,
+            'sec_companyname' => $companyname,
+            'sec_idcompany' => $idcompany,
+            'sec_technician' => $admin);
+        return $userData;
+      } else {
+        return $user_id;
+      }
     } catch (exception $e) {
       $msg = "Error in SecuritasWS->createUser(),  email: $user_email. " . $e->getmessage();
       $this->saveToFile($this->logFile, $msg, 'ERROR');

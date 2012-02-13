@@ -229,6 +229,7 @@ class LimeWService {
             <field>authorizedarc</field>
             <field>authorizedportal</field>
             <field>admninrights</field>
+            <field>wpuserid</field>
          </fields>
          <conditions>
             <condition operator="=">
@@ -277,14 +278,14 @@ class LimeWService {
     if ($type == 'code') {
       $codeToName = array(
           '2164001' => 'Administration',
-          '2161001' => 'Säljare',
+          '2161001' => 'S√§ljare',
           '2163001' => 'Tekniker',
           '3065001' => 'Annan');
       return $codeToName[$arg];
     } else {
       $nameToCode = array(
           'Administration' => '2164001',
-          'Säljare' => '2161001',
+          'S√§ljare' => '2161001',
           'Tekniker' => '2163001',
           'Annan' => '3065001');
       return $nameToCode[$arg];
@@ -356,6 +357,7 @@ class LimeWService {
             <field>authorizedarc</field>
             <field>authorizedportal</field>
             <field>admninrights</field>
+            <field>wpuserid</field>
          </fields>
          <conditions>
             <condition operator="=">
@@ -392,7 +394,7 @@ class LimeWService {
    *
    * @return <type>
    */
-  public function updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position = '3065001', $ended = '0') {
+  public function updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position = '3065001', $ended = '0', $wpuserid = 0) {
     if (isset($idperson)) {
       $params = array('data' =>
           '<data>
@@ -408,6 +410,7 @@ class LimeWService {
                 authorizedarc="' . $lc . '"
                 authorizedportal="' . $portal . '"
                 admninrights="' . $admin . '"
+                wpuserid="' . $wpuserid . '"
               />
             </data>'
       );
