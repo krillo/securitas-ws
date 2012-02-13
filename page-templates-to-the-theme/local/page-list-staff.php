@@ -1,6 +1,6 @@
 <?php
 /**
-  Template Name: SecuritasWS List Staff
+ * Template Name: SecuritasWS List Staff
  */
 get_header();
 ?>
@@ -8,7 +8,14 @@ get_header();
     <div id="content" role="main">
         <?php while (have_posts()) : the_post(); ?>
             <?php get_template_part('content', 'page'); ?>
-            <?php securitasWSgetStaffList(get_the_author_meta('sec_idcompany', get_current_user_id()));?>
+            <?php
+              $userId = get_current_user_id();
+              if($userId != 0){
+                securitasWSgetStaffList(get_user_meta($userId, 'sec_idcompany', true));
+              } else {
+                echo "Not allowed";
+              }
+            ?>
         <?php endwhile; // end of the loop. ?>
     </div><!-- #content -->
 </div><!-- #primary -->

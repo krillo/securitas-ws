@@ -165,7 +165,7 @@ class SecuritasWS {
    */
   public function editPerson($personId) {
     $response = $this->lime->getPerson($personId);
-    var_dump($response);
+    //var_dump($response);
 
     $pluginRoot = plugins_url("", __FILE__);
     $actionFile = $pluginRoot . "/api_lime_update_person.php";
@@ -686,8 +686,8 @@ class SecuritasWS {
  * @param type $companyId 
  */
 function securitasWSgetStaffList($companyId) {
-  $lime = new SecuritasWS();
-  $lime->getStaffList($companyId);
+  $sws = new SecuritasWS();
+  $sws->getStaffList($companyId);
 }
 
 /**
@@ -696,8 +696,8 @@ function securitasWSgetStaffList($companyId) {
  * @param type $personId 
  */
 function securitasWSeditStaff($personId) {
-  $lime = new SecuritasWS();
-  $lime->editPerson($personId);
+  $sws = new SecuritasWS();
+  $sws->editPerson($personId);
 }
 
 /**
@@ -714,8 +714,8 @@ function securitasWSaddStaff($companyId) {
  * Outputs a company dump from WS 
  */
 function securitasWSdebugOutput() {
-  $lime = new SecuritasWS();
-  $lime->debugOutput();
+  $sws = new SecuritasWS();
+  $sws->debugOutput();
 }
 
 /* * ************************************
