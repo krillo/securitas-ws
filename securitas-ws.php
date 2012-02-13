@@ -3,7 +3,7 @@
 /**
   Plugin Name: Securitas-WS
   Plugin URI: http://securitas.com/
-  Description: Integration to Lundalogik, Lime
+  Description: Integration to Securitas Web Services
   Version: 1.0
   Author: Kristian Erendi
   Author URI: http://reptilo.se
@@ -136,9 +136,11 @@ class SecuritasWS {
         $output .= '<p>' . $value->attributes()->cellphone . '</p>';
         $output .= '</div>';
         $output .= '<div><strong>Eligibility</strong>';
-        $output .= '<input type="checkbox" disabled ' . $lc . '> LC';
-        $output .= '<input type="checkbox" disabled ' . $portal . '> Portal';
-        $output .= '<input type="checkbox" disabled ' . $admin . '> Administrator';
+        $output .= '<ul>';
+        $output .= '<li><input type="checkbox" disabled ' . $lc . '><span> LC</span></li>';
+        $output .= '<li><input type="checkbox" disabled ' . $portal . '><span> Portal</span></li>';
+        $output .= '<li><input type="checkbox" disabled ' . $admin . '><span> Administrator</span></li>';
+        $output .= '</ul>';        
         $output .= '</div>';
         $output .= '</div>';
         if ($fullAccess) {
