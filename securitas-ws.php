@@ -168,6 +168,7 @@ class SecuritasWS {
   public function editPerson($personId) {
     $response = $this->lime->getPerson($personId);
     //var_dump($response);
+    $userId = get_current_user_id();
 
     $pluginRoot = plugins_url("", __FILE__);
     $actionFile = $pluginRoot . "/api_lime_update_person.php";
@@ -310,8 +311,8 @@ class SecuritasWS {
       $output .= '<p><!--staff-info--></p>';
       $output .= '<div class="staff-buttons">';
       $output .= '<input type="hidden" name="idperson" id="idperson" value="' . $value->attributes()->idperson . '">';
-      $output .= '<input type="hidden" name="idcompany" id="idcompany" value="' . get_the_author_meta('sec_idcompany') . '">';
-      $output .= '<input type="hidden" name="companyname" id="companyname" value="' . get_the_author_meta('sec_companyname') . '">';
+      $output .= '<input type="hidden" name="idcompany" id="idcompany" value="' . get_user_meta($userId, 'sec_idcompany', true) . '">';
+      $output .= '<input type="hidden" name="companyname" id="companyname" value="' . get_user_meta($userId, 'sec_companyname', true) . '">';
       $output .= '<input type="hidden" name="original_lc" id="original_lc" value="' . $value->attributes()->authorizedarc . '">';
       $output .= '<input type="hidden" name="wpuserid" id="wpuserid" value="' . $value->attributes()->wpuserid . '">';
       $output .= '<input type="submit" class="wpcf7-submit" id="save-person" value="Save">';
