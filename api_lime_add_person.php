@@ -13,4 +13,4 @@ $ended = $_POST['ended'];
 require_once(__DIR__ . '/../../../wp-config.php');
 require_once('securitas-ws.php');
 $sws = new SecuritasWS();
-$sws->updatePerson($firstname,$familyname,$cellphone,$email, -1 ,      $admin, $lc, $lc, $portal, $idcompany, $companyname, $position, 0);  //always set ended to 0 when its an "add person"
+$sws->insertPerson($firstname,$familyname,$cellphone,$email, -1, $admin, $lc, $lc, $portal, $idcompany, $companyname, $position, 0, '0');  //always set ended to 0 when its an "add person"

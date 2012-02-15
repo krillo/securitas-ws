@@ -278,14 +278,14 @@ class LimeWService {
     if ($type == 'code') {
       $codeToName = array(
           '2164001' => 'Administration',
-          '2161001' => 'S√§ljare',
+          '2161001' => 'Säljare',
           '2163001' => 'Tekniker',
           '3065001' => 'Annan');
       return $codeToName[$arg];
     } else {
       $nameToCode = array(
           'Administration' => '2164001',
-          'S√§ljare' => '2161001',
+          'Säljare' => '2161001',
           'Tekniker' => '2163001',
           'Annan' => '3065001');
       return $nameToCode[$arg];
@@ -367,24 +367,12 @@ class LimeWService {
         </conditions>
 		  </query>');
 
-      try {
-        if (self::debug) {
-          $this->saveToFile("lime.log", print_r($params, true), 'DEBUG');
-        }
-        $response = $this->client->GetXmlQueryData($params);
-        $this->saveToFile("lime.log", $this->client->__getLastResponse(), 'INFO');
-        $response = $this->client->__getLastResponse();
-        $xml = $this->responseToSimpleXML($response, 'select');
-        return $xml;
-      } catch (exception $e) {
-        $this->saveToFile("lime.log", 'Exception in selectFromPerson()', 'ERROR');
-        $this->saveToFile("lime.log", $e->getmessage(), 'ERROR');
-        echo "Exception in selectFromPerson()<br>";
-        die($e->getmessage());
-      }
+      $xml = $this->doWSQuery($params, 'select', 'selectFromPerson()');
+      return $xml;
     } else {
-      $this->saveToFile("lime.log", 'Exception in selectFromPerson(). No companyId ', 'ERROR');
-    }
+      $this->saveToFile($this->logFile, 'Exception in selectFromPerson(). No personId ', 'ERROR');
+      return false;
+    }      
   }
 
   /**
@@ -423,6 +411,49 @@ class LimeWService {
     }
   }
 
+
+  /**
+   * Update or insert a record into Person
+   * Position is defaulted to '3065001' which translates to 'other'
+   * Ended is defaulted to 0 which translates to 'not ended' 
+   *
+   * @return <type>
+   */
+  public function insertPerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position = '3065001', $ended = '0', $wpuserid = 0) {
+    if (isset($idperson)) {
+      $params = array('data' =>
+          '<data>
+              <person
+                idperson="' . $idperson . '"
+                firstname="' . $firstname . '"
+                familyname="' . $familyname . '"
+                company="' . $idcompany . '"
+                ended="' . $ended . '"
+                position="' . $position . '"
+                email="' . $email . '"
+                cellphone="' . $cellphone . '"
+                authorizedarc="' . $lc . '"
+                authorizedportal="' . $portal . '"
+                admninrights="' . $admin . '"
+                wpuserid="' . $wpuserid . '"
+              />
+            </data>'
+      );
+      $xml = $this->doWSQuery($params, 'update', 'insertPerson()');
+      $idnew = $xml->record[0]->attributes()->idnew;
+      $idnew = (string)$idnew[0];
+      return $idnew;
+    } else {
+      $this->saveToFile($this->logFile, 'Exception in updatePerson(). No personId ', 'ERROR');
+      return 0;
+    }
+  }
+  
+
+  
+  
+  
+  
   /**
    * Convert the response to simpleXML object
    * @param <type> $response

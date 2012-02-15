@@ -64,7 +64,7 @@ class SecuritasWS {
 
     //access to edit?
     $fullAccess = false;
-    if (get_the_author_meta('sec_technician', get_current_user_id()) == '1') {
+    if (get_user_meta(get_current_user_id(), 'sec_technician', true) == '1') {
       $fullAccess = true;
     }
 
@@ -137,17 +137,18 @@ class SecuritasWS {
         $output .= '</div>';
         $output .= '<div><strong>Eligibility</strong>';
         $output .= '<ul>';
-        $output .= '<li><input type="checkbox" disabled ' . $lc . '><span> LC</span></li>';
-        $output .= '<li><input type="checkbox" disabled ' . $portal . '><span> Portal</span></li>';
-        $output .= '<li><input type="checkbox" disabled ' . $admin . '><span> Administrator</span></li>';
-        $output .= '</ul>';        
+        $output .= '<li><input type="checkbox" disabled ' . $lc . '><span>LC</span></li>';
+        $output .= '<li><input type="checkbox" disabled ' . $portal . '><span>Portal</span></li>';
+        $output .= '<li><input type="checkbox" disabled ' . $admin . '><span>Administrator</span></li>';
+        $output .= '</ul>';
         $output .= '</div>';
         $output .= '</div>';
         if ($fullAccess) {
           $output .= '<div id="staff-buttons">';
-          $output .= '<input type="hidden" value="' . $value->attributes()->idperson . '" /><span><br />';
-          $output .= '<input class="wpcf7-submit" type="button" value="X" onclick="deletePerson(' . $value->attributes()->idperson . ');return false;" /><span><br />';
-          $output .= '<input class="wpcf7-submit" type="button" value="Edit"  onclick="editPerson(' . $value->attributes()->idperson . ');return false;"/></span>';
+          $output .= '<input type="hidden" name="idperson" id="idperson" value="' . $value->attributes()->idperson . '" />';
+          $output .= '<input type="hidden" name="wpuserid" id="wpuserid" value="' . $value->attributes()->wpuserid . '">';
+          $output .= '<input class="wpcf7-submit" type="button" value="X" onclick="deletePerson(' . $value->attributes()->idperson . ');return false;" />';
+          $output .= '<input class="wpcf7-submit" type="button" value="Edit"  onclick="editPerson(' . $value->attributes()->idperson . ');return false;"/>';
           $output .= '</div>';
         }
         $output .= '</div>';
@@ -432,7 +433,7 @@ class SecuritasWS {
     $output .= '<p><!--staff-info--></p>';
     $output .= '<div class="staff-buttons">';
     $output .= '<input type="hidden" name="idcompany" id="idcompany" value="' . $companyId . '">';
-    $output .= '<input type="hidden" name="companyname" id="companyname" value="' . get_the_author_meta('sec_companyname') . '">';
+    $output .= '<input type="hidden" name="companyname" id="companyname" value="' . get_user_meta(get_current_user_id(), 'sec_companyname', true) . '">';
     $output .= '<input type="submit" class="wpcf7-submit" id="save-person" value="Save">';
     $output .= '</div>';
     $output .= '</fieldset>';
@@ -445,6 +446,32 @@ class SecuritasWS {
     $output .= '<div id="success"></div>';
 
     echo $output;
+  }
+
+  
+  /**
+   * insert a new person
+   * 
+   * @param type $firstname
+   * @param type $familyname
+   * @param type $cellphone
+   * @param type $email
+   * @param type $idperson
+   * @param type $admin
+   * @param type $lc
+   * @param type $original_lc
+   * @param type $portal
+   * @param type $idcompany
+   * @param type $companyname
+   * @param type $position
+   * @param type $ended
+   * @param type $wpuserid 
+   */
+  public function insertPerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $original_lc, $portal, $idcompany, $companyname, $position, $ended, $wpuserid) {
+    $securitasUserId = $this->lime->insertPerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $wpuserid);
+    if($securitasUserId > 0 && ($portal == 1 || $admin == 1)){
+      $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin, $securitasUserId);      
+    }
   }
 
   /**
@@ -473,40 +500,41 @@ class SecuritasWS {
     if ($success) {
       $wpUserUpdated = false;
       $wpUserId = $wpuserid;
-      if ($wpUserId != 0) {   //person already wp-user, update the wp-data
+      if ($wpUserId != 0) {   //person already wp-user, update the wp-data     
+        echo 'wp-userid: ' . $wpUserId . ' tech: ' . $admin;
         update_user_meta($wpUserId, 'first_name', $firstname);
         update_user_meta($wpUserId, 'last_name', $familyname);
         update_user_meta($wpUserId, 'sec_companyname', $companyname);
         update_user_meta($wpUserId, 'sec_idcompany', $idcompany);
         update_user_meta($wpUserId, 'sec_technician', $admin);
+        update_user_meta($wpUserId, 'sec_securitasid', $idperson);
         $wpUserUpdated = true;
       }
 
-      if ($portal == 1) {   //if access to the portal then create a wp-user
-        $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin);
+      if ($portal == 1 && $wpUserId == 0) {   //if access to the portal and no wp-useridthen create a wp-user
+        $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin, $idperson);
         //print_r($userData);
         if (gettype($userData) == 'array') {  //the user was just created - send a welcome email   
           $wpUserUpdated = true;
           $this->sendEmail('portal', $firstname, $familyname, $cellphone, $email, $lc, $portal, $userData);
           //add the wpuserid to the WebService
           $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $userData['user_id']);
-        } 
+        }
       }
-            
-     if ($admin == 1) {   //if adminster the portal then create a wp-user
-        $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin);
-        print_r($userData);
+
+      if ($admin == 1 && $wpUserId == 0) {   //if adminster the portal then create a wp-user
+        $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin, $idperson);
+        //print_r($userData);
         if (gettype($userData) == 'array') {  //the user was just created update WebService with wpuserid  
           $wpUserUpdated = true;
           $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $userData['user_id']);
-        } 
-      }      
+        }
+      }
 
-  
+
       if ($original_lc != $lc) {  //the LC eligibility has been changed, send mail to securitas
         $this->sendEmail('lc', $firstname, $familyname, $cellphone, $email, $lc, $portal);
       }
-          
     }
   }
 
@@ -620,7 +648,7 @@ class SecuritasWS {
    * @param type $admin
    * @return array 
    */
-  public function createUser($user_email, $first_name, $family_name, $idcompany, $companyname, $admin) {
+  public function createUser($user_email, $first_name, $family_name, $idcompany, $companyname, $admin, $idperson) {
     try {
       $user_name = $this->createUserName($user_email);
       $user_id = username_exists($user_name);
@@ -632,8 +660,10 @@ class SecuritasWS {
         add_user_meta($user_id, 'sec_companyname', $companyname);
         add_user_meta($user_id, 'sec_idcompany', $idcompany);
         add_user_meta($user_id, 'sec_technician', $admin);
+        add_user_meta($user_id, 'sec_securitasid', $idperson);
 
-        $msg = "A new user was created for $companyname, $idcompany, user name: $user_name, password: $random_password, email: $user_email, user id: $user_id";
+
+        $msg = "A new user was created for $companyname, $idcompany, user name: $user_name, password: $random_password, email: $user_email, user id: $user_id, sec_securitasid: $idperson";
         $this->saveToFile($this->logFile, $msg, 'INFO');
         $userData = array('user_id' => $user_id,
             'user_name' => $user_name,
@@ -642,7 +672,8 @@ class SecuritasWS {
             'last_name' => $family_name,
             'sec_companyname' => $companyname,
             'sec_idcompany' => $idcompany,
-            'sec_technician' => $admin);
+            'sec_technician' => $admin,
+            'sec_securitasid' => $idperson);
         return $userData;
       } else {
         return $user_id;
@@ -778,32 +809,40 @@ add_action('edit_user_profile', 'extra_user_company_id');
 
 function extra_user_company_id($user) {
   $technician = '';
-  if (get_the_author_meta('sec_technician', $user->ID) == '1') {
-    $technician = 'checked';
+  $technician_value = "0";
+  if (get_user_meta($user->ID, 'sec_technician', true) == '1') {
+    $technician = 'checked="checked"';
   }
   ?>
   <?php if (current_user_can('administrator')): ?>
     <h3><?php _e("Securitas WebService Settings", "blank"); ?></h3>
     <table class="form-table">
       <tr>
-        <th><label for="idcompany"><?php _e("CompanyId"); ?></label></th>
-        <td>
-          <input type="text" name="idcompany" id="idcompany" value="<?php echo esc_attr(get_the_author_meta('sec_idcompany', $user->ID)); ?>" class="regular-text" />
-          <span class="description"><?php _e("Please enter the company id used in your web service."); ?></span>
+        <th><label for="idcompany"><?php _e("CompanyId"); ?></label></th> 
+        <td>                                                                            
+          <input type="text" name="idcompany" id="idcompany" value="<?php echo esc_attr(get_user_meta($user->ID, 'sec_idcompany', true)); ?>" class="regular-text" />
+          <span class="description"><?php _e("Enter the company id used in your web service."); ?></span>
         </td>
       </tr>
       <tr>
         <th><label for="companyname"><?php _e("Company name"); ?></label></th>
         <td>
-          <input type="text" name="companyname" id="companyname" value="<?php echo esc_attr(get_the_author_meta('sec_companyname', $user->ID)); ?>" class="regular-text" />
-          <span class="description"><?php _e("Please enter the company name."); ?></span>
+          <input type="text" name="companyname" id="companyname" value="<?php echo esc_attr(get_user_meta($user->ID, 'sec_companyname', true)); ?>" class="regular-text" />
+          <span class="description"><?php _e("Enter the company name."); ?></span>
+        </td>
+      </tr>      
+      <tr>
+        <th><label for="securitaswsid"><?php _e("Securitas WebService user id"); ?></label></th>
+        <td>
+          <input type="text" name="securitaswsid" id="securitaswsid" value="<?php echo esc_attr(get_user_meta($user->ID, 'sec_securitasid', true)); ?>" class="regular-text" />
+          <span class="description"><?php _e("Enter the Securitas WebService user id."); ?></span>
         </td>
       </tr>      
       <tr>
         <th><label for="technician"><?php _e("Technician administrator"); ?></label></th>
         <td>
-          <input type="checkbox" name="technician" id="technician" value="1" <?php echo $technician; ?>/>
-          <span class="description"><?php _e("User can add and remove personel."); ?></span>
+          <input type="checkbox" name="technician" id="technician" value="<?php echo $technician_value; ?>" <?php echo $technician; ?>/>   
+          <span class="description"><?php _e("User can add and remove personel on this site."); ?></span>
         </td>
       </tr>
     </table>
@@ -824,8 +863,10 @@ function save_extra_user_company_id($user_id) {
   if (isset($_POST['companyname'])) {
     update_user_meta($user_id, 'sec_companyname', $_POST['companyname']);
   }
-  if (isset($_POST['technician'])) {
-    update_user_meta($user_id, 'sec_technician', $_POST['technician']);
+  if (isset($_POST['securitaswsid'])) {
+    update_user_meta($user_id, 'sec_securitasid', $_POST['securitaswsid']);
   }
+  $tech_value = isset($_POST['technician']) && '0' == $_POST['technician'] ? '1' : '0';
+  update_user_meta($user_id, 'sec_technician', $tech_value);
 }
 ?>
