@@ -406,7 +406,7 @@ class LimeWService {
       //return $xml;
       return true;
     } else {
-      $this->saveToFile($this->logFile, 'Exception in updatePerson(). No personId ', 'ERROR');
+      $this->saveToFile($this->logFile, 'Exception in updatePerson(). No idperson submitted', 'ERROR');
       return false;
     }
   }
