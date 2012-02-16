@@ -371,8 +371,8 @@ class LimeWService {
 
       $xml = $this->doWSQuery($params, 'select', 'personExists()');
       if(!isset($xml->person->attributes()->idperson)){
-        echo 'personExists: false';
-      } else {
+        //person doesn't exist
+      } else { 
         $data['idperson'] = (string)$xml->person->attributes()->idperson;
         $data['email'] = (string)$xml->person->attributes()->email;
         $data['wpuserid'] = (string)$xml->person->attributes()->wpuserid;

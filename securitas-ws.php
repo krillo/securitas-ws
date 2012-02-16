@@ -581,7 +581,6 @@ class SecuritasWS {
 
 
       if ($original_lc != $lc) {  //the LC eligibility has been changed, send mail to securitas
-        echo 'send email';
         $this->sendEmail('lc', $firstname, $familyname, $cellphone, $email, $lc, $portal);
         $result['EmailSecuritasSupport'] = 'sent';
         $result['status'] = 'Success';
@@ -673,10 +672,10 @@ class SecuritasWS {
       if ($success):
         $msg = "Email ($subject)sent to $to";
         $this->saveToFile($this->logFile, $msg, 'INFO');
-        echo 'success';
+        //echo 'success';
       else:
         $this->saveToFile($this->logFile, 'Error sending email, 2', 'ERROR');
-        echo 'error';
+        //echo 'error';
       endif;
     }
   }
