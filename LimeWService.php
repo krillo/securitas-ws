@@ -54,7 +54,7 @@ class LimeWService {
     $params = array();
     try {
       $response = $this->client->GetDatabaseSchema($params);
-      $this->saveToFile("lime.log", $this->client->__getLastResponse(), 'INFO');
+      $this->saveToFile($this->logFile, $this->client->__getLastResponse(), 'INFO');
       $response = $this->client->__getLastResponse();
       $xml = $this->responseToSimpleXML($response, 'databaseschema');
       return $xml;
@@ -65,41 +65,6 @@ class LimeWService {
     return $response;
   }
 
-  /**
-   * Select from coworker
-   * @param <type> $count
-   * @return <type>
-   */
-  public function selectFromCoworker($count = 10) {
-    $params = array('query' =>
-        '<query distinct="0" top="' . $count . '">
-         <tables>
-            <table>coworker</table>
-         </tables>
-         <fields>
-            <field sortorder="asc" sortindex="1">name</field>
-            <field>email</field>
-            <field>phone</field>
-            <field>cellphone</field>
-         </fields>
-         <conditions>
-        </conditions>
-		  </query>');
-
-    try {
-      if (self::debug) {
-        $this->saveToFile("lime.log", print_r($params, true), 'DEBUG');
-      }
-      $response = $this->client->GetXmlQueryData($params);
-      $this->saveToFile("lime.log", $this->client->__getLastResponse(), 'INFO');
-      $response = $this->client->__getLastResponse();
-      $xml = $this->responseToSimpleXML($response, 'select');
-      return $xml;
-    } catch (exception $e) {
-      echo "Exception in company()<br>";
-      die($e->getmessage());
-    }
-  }
 
   /**
    * Select from company
@@ -318,7 +283,6 @@ class LimeWService {
           $response = $this->client->GetDatabaseSchema($params);
           break;
       }
-
       $this->saveToFile($this->logFile, $this->client->__getLastResponse(), 'INFO');
       $response = $this->client->__getLastResponse();
       $xml = $this->responseToSimpleXML($response, $queryType);
@@ -375,6 +339,53 @@ class LimeWService {
     }      
   }
 
+  
+    /**
+     * Does the person exist, check by emsil
+     * returns a data array for true
+     * returns false if person doesn't exist
+     * 
+     * @param type $email
+     * @return boolean 
+     */
+    public function personExists($email) {
+      $data = array('idperson' => '0');
+    if (isset($email)) {
+      $params = array('query' =>
+          '<query distinct="0" top="1">
+         <tables>
+            <table>person</table>
+         </tables>
+         <fields>           
+            <field>idperson</field>
+            <field>email</field>
+            <field>wpuserid</field>
+         </fields>
+         <conditions>
+            <condition operator="=">
+              <exp type="field">email</exp>
+              <exp type="string">' . $email . '</exp>
+            </condition>
+        </conditions>
+		  </query>');
+
+      $xml = $this->doWSQuery($params, 'select', 'personExists()');
+      if(!isset($xml->person->attributes()->idperson)){
+        echo 'personExists: false';
+      } else {
+        $data['idperson'] = (string)$xml->person->attributes()->idperson;
+        $data['email'] = (string)$xml->person->attributes()->email;
+        $data['wpuserid'] = (string)$xml->person->attributes()->wpuserid;
+      }
+      return $data; 
+    } else {
+      $this->saveToFile($this->logFile, 'Exception in personExists(). No email submitted ', 'ERROR');
+      $data['idperson'] = 'error';
+      return $data;
+    }      
+  }
+  
+  
   /**
    * Update or insert a record into Person
    * Position is defaulted to '3065001' which translates to 'other'
@@ -461,10 +472,9 @@ class LimeWService {
   private function responseToSimpleXML($response, $type = 'query') {
     $returnXml = '';
     try {
-      if (self::debug) {
-        $s = 'The response is of type ' . gettype($response);
-        $this->saveToFile("lime.log", $s, 'DEBUG');
-      }
+      $msg = 'The response is of type ' . gettype($response);
+      $this->saveToFile($this->logFile, $msg, 'DEBUG');
+
       libxml_use_internal_errors(true);
       $xml = simplexml_load_string($response);
       switch ($type) {
@@ -473,7 +483,6 @@ class LimeWService {
           break;
         case 'update':
           $body = trim((string) $xml->children('http://schemas.xmlsoap.org/soap/envelope/')->children()->UpdateDataResponse->UpdateDataResult);
-          //<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><UpdateDataResponse xmlns="http://lundalogik.se/Tangelo/"><UpdateDataResult>&lt;?xml version="1.0" encoding="UTF-16" ?&gt;&lt;xml transactionid="89334EF6-5055-48BB-8129-B81656A403EB"&gt;&lt;record table="office" idold="-1" idnew="15001"/&gt;&lt;/xml&gt;</UpdateDataResult></UpdateDataResponse></s:Body></s:Envelope>
           break;
         case 'databaseschema':
           $body = trim((string) $xml->children('http://schemas.xmlsoap.org/soap/envelope/')->children()->GetDatabaseSchemaResponse->GetDatabaseSchemaResult);
@@ -484,11 +493,11 @@ class LimeWService {
       $body = str_replace("UTF-16", "UTF-8", $body);  //fucked! but this must be done!
       $cleanXml = simplexml_load_string($body);
       if (!$cleanXml) {
-        $this->saveToFile("lime.log", libxml_get_errors(), 'ERROR');
+        $this->saveToFile($this->logFile, libxml_get_errors(), 'ERROR');
       }
       $returnXml = $cleanXml;
     } catch (Exception $e) {
-      $this->saveToFile("lime.log", 'Exception in responseToSimpleXML() ' . $e->getmessage() . "\n" . $e->getTraceAsString(), 'ERROR');
+      $this->saveToFile($this->logFile, 'Exception in responseToSimpleXML() ' . $e->getmessage() . "\n" . $e->getTraceAsString(), 'ERROR');
       die($e->getmessage());
     }
     return $cleanXml;
@@ -502,13 +511,15 @@ class LimeWService {
    */
   public function saveToFile($filename, $data, $type = 'INFO') {
     if (self::debug) {
+      $data = (string)$data;
       $fh = fopen($filename, 'a') or die("can't open file");
       fwrite($fh, "\n" . date('Y-m-d H:m:s') . ' [' . $type . '] ');
       fwrite($fh, $data);
       fclose($fh);
     }
-  }
-
+  }  
+  
+  
   public function debug() {
     $client = $this->client;
     echo "REQUEST HEADERS:" . $client->__getLastRequestHeaders() . "<br />";

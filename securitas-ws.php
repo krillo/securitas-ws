@@ -116,26 +116,26 @@ class SecuritasWS {
         $output .= '<li>';
         $output .= '<div class="staff-container">';
         $output .= '<div class="staff-info">';
-        $output .= '<div><strong>'. __('Name', 'securitas-ws').'</strong>';
+        $output .= '<div><strong>' . __('Name', 'securitas-ws') . '</strong>';
         $output .= '<p>' . $value->attributes()->firstname . '</p>';
         $output .= '</div>';
-        $output .= '<div><strong>'. __('Last name', 'securitas-ws').'</strong>';
+        $output .= '<div><strong>' . __('Last name', 'securitas-ws') . '</strong>';
         $output .= '<p>' . $value->attributes()->familyname . '</p>';
         $output .= '</div>';
-        $output .= '<div><strong>'. __('Function', 'securitas-ws').'</strong>';
+        $output .= '<div><strong>' . __('Function', 'securitas-ws') . '</strong>';
         $output .= '<p>' . $value->attributes()->$position . '</p>';
         $output .= '</div>';
-        $output .= '<div><strong>'. __('E-mail', 'securitas-ws').'</strong>';
+        $output .= '<div><strong>' . __('E-mail', 'securitas-ws') . '</strong>';
         $output .= '<p><a href="mailto:' . $value->attributes()->email . '">' . $value->attributes()->email . '</a></p>';
         $output .= '</div>';
-        $output .= '<div><strong>'. __('Mobile', 'securitas-ws').'</strong>';
+        $output .= '<div><strong>' . __('Mobile', 'securitas-ws') . '</strong>';
         $output .= '<p>' . $value->attributes()->cellphone . '</p>';
         $output .= '</div>';
-        $output .= '<div><strong>'. __('Eligibility', 'securitas-ws').'</strong>';
+        $output .= '<div><strong>' . __('Eligibility', 'securitas-ws') . '</strong>';
         $output .= '<ul>';
-        $output .= '<li><div class="lc">' . $lc . '</div></li>';
-        $output .= '<li><div class="portal">' . $portal . '</div></li>';
-        $output .= '<li><div class="admin">' . $admin . '</div></li>';
+        $output .= '<li>' . $lc . '</li>';
+        $output .= '<li>' . $portal . '</li>';
+        $output .= '<li>' . $admin . '</li>';
         $output .= '</ul>';
         $output .= '</div>';
         $output .= '</div>';
@@ -171,6 +171,17 @@ class SecuritasWS {
     $actionFile = $pluginRoot . "/api_lime_update_person.php";
     echo '<script type="text/javascript">
   jQuery(document).ready(function(){
+  
+    //progress wheel
+    jQuery("#loading")
+      .hide()  // hide it initially
+      .ajaxStart(function() {
+        jQuery(this).show();
+      })
+      .ajaxStop(function() {
+        jQuery(this).hide();
+    });
+
     jQuery("#save-person").click(function(event) {
       event.preventDefault();
       var self = jQuery(this);
@@ -203,8 +214,9 @@ class SecuritasWS {
             cache: false,
             success: function(data){
               console.log(data);
-              
-              jQuery("#success").html("Save successful");
+               //json array returned
+              console.log(data);
+              jQuery("#success").html(data.status);
             }
         });
 
@@ -265,41 +277,41 @@ class SecuritasWS {
       $output .= '<fieldset>';
       $output .= '<div class="staff-info">';
       $output .= '<div>';
-      $output .= '<div class="labels"><label for="name">'. __('Name', 'securitas-ws').'</label></div>';
+      $output .= '<div class="labels"><label for="name">' . __('Name', 'securitas-ws') . '</label></div>';
       $output .= '<input type="text" class="name" value="' . $value->attributes()->firstname . '" id="firstname" name="firstname">';
       $output .= '</div>';
       $output .= '<div>';
-      $output .= '<div class="labels"><label for="lastname">'. __('Last name', 'securitas-ws').'</label></div>';
+      $output .= '<div class="labels"><label for="lastname">' . __('Last name', 'securitas-ws') . '</label></div>';
       $output .= '<input type="text" class="lastname" value="' . $value->attributes()->familyname . '" id="familyname" name="familyname">';
       $output .= '</div>';
       $output .= '<div class="pp-select">';
-      $output .= '<div class="labels"><label for="position">'. __('Choose role', 'securitas-ws').'</label></div>';
+      $output .= '<div class="labels"><label for="position">' . __('Choose role', 'securitas-ws') . '</label></div>';
       $output .= '<select id="position">';
-      $output .= '<option value="2161001" ' . $sales . '>'. __('Sales', 'securitas-ws').'</option>';
-      $output .= '<option value="2163001" ' . $technician . '>'. __('Technician', 'securitas-ws').'</option>';
-      $output .= '<option value="2164001" ' . $marketing . '>'. __('Marketing', 'securitas-ws').'</option>';
-      $output .= '<option value="3065001" ' . $other . '>'. __('Other', 'securitas-ws').'</option>';
+      $output .= '<option value="2161001" ' . $sales . '>' . __('Sales', 'securitas-ws') . '</option>';
+      $output .= '<option value="2163001" ' . $technician . '>' . __('Technician', 'securitas-ws') . '</option>';
+      $output .= '<option value="2164001" ' . $marketing . '>' . __('Marketing', 'securitas-ws') . '</option>';
+      $output .= '<option value="3065001" ' . $other . '>' . __('Other', 'securitas-ws') . '</option>';
       $output .= '</select>';
       $output .= '</div>';
       $output .= '<div>';
-      $output .= '<div class="labels"><label for="mobile">'. __('Mobile', 'securitas-ws').'</label></div>';
+      $output .= '<div class="labels"><label for="mobile">' . __('Mobile', 'securitas-ws') . '</label></div>';
       $output .= '<input type="text" class="mobile" value="' . $value->attributes()->cellphone . '" id="cellphone" name="cellphone">';
       $output .= '</div>';
       $output .= '<div>';
-      $output .= '<div class="labels"><label for="email">'. __('E-mail', 'securitas-ws').'</label></div>';
+      $output .= '<div class="labels"><label for="email">' . __('E-mail', 'securitas-ws') . '</label></div>';
       $output .= '<input type="text" class="email" value="' . $value->attributes()->email . '" id="email" name="email">';
       $output .= '</div>';
       $output .= '<div class="pp-wrap">';
       $output .= '<input type="checkbox" value="1" class="pp-check" name="admin" id="admin" ' . $admin . '/>';
-      $output .= '<div class="pp-checkbox">'. __('Technical Administrator', 'securitas-ws').'</div>';
+      $output .= '<div class="pp-checkbox">' . __('Technical Administrator', 'securitas-ws') . '</div>';
       $output .= '</div>';
       $output .= '<div>';
       $output .= '<input type="checkbox" value="1" class="pp-check" name="lc"  id="lc" ' . $elegible . '/>';
-      $output .= '<div class="pp-checkbox">'. __('Elegible LC', 'securitas-ws').'</div>';
+      $output .= '<div class="pp-checkbox">' . __('Elegible LC', 'securitas-ws') . '</div>';
       $output .= '</div>';
       $output .= '<div>';
       $output .= '<input type="checkbox" value="1" class="pp-check" name="portal" id="portal" ' . $portal . '/>';
-      $output .= '<div class="pp-checkbox">'. __('Elegible Portal', 'securitas-ws').'</div>';
+      $output .= '<div class="pp-checkbox">' . __('Elegible Portal', 'securitas-ws') . '</div>';
       $output .= '</div>';
       $output .= '</div>';
       $output .= '<p><!--staff-info--></p>';
@@ -309,7 +321,7 @@ class SecuritasWS {
       $output .= '<input type="hidden" name="companyname" id="companyname" value="' . get_user_meta($userId, 'sec_companyname', true) . '">';
       $output .= '<input type="hidden" name="original_lc" id="original_lc" value="' . $value->attributes()->authorizedarc . '">';
       $output .= '<input type="hidden" name="wpuserid" id="wpuserid" value="' . $value->attributes()->wpuserid . '">';
-      $output .= '<input type="submit" class="wpcf7-submit" id="save-person" value="'. __('Save', 'securitas-ws').'">';
+      $output .= '<input type="submit" class="wpcf7-submit" id="save-person" value="' . __('Save', 'securitas-ws') . '">';
       $output .= '</div>';
       $output .= '</fieldset>';
       $output .= '</form>';
@@ -318,7 +330,7 @@ class SecuritasWS {
       $output .= '</li>';
       $output .= '</ul>';
       $output .= '</div>';
-      $output .= '<div id="success"></div>';
+      $output .= '<div id="success"></div><div id="loading"><img src="' . $pluginRoot . '/img/ajax-loader.gif" alt=""></div>';
     }
     echo $output;
   }
@@ -335,6 +347,17 @@ class SecuritasWS {
 
     echo '<script type="text/javascript">
   jQuery(document).ready(function(){
+
+    //progress wheel
+    jQuery("#loading")
+      .hide()  // hide it initially
+      .ajaxStart(function() {
+        jQuery(this).show();
+      })
+      .ajaxStop(function() {
+        jQuery(this).hide();
+    });
+
     jQuery("#save-person").click(function(event) {
       event.preventDefault();
       var self = jQuery(this);
@@ -361,13 +384,11 @@ class SecuritasWS {
             url: "' . $actionFile . '",
             data: dataString,
             cache: false,
-            success: function(data){
+            success: function(data){  //json array returned
               console.log(data);
-              
-              jQuery("#success").html("Save successful");
+              jQuery("#success").html(data.status);
             }
         });
-
 
     });
   });
@@ -382,41 +403,41 @@ class SecuritasWS {
     $output .= '<fieldset>';
     $output .= '<div class="staff-info">';
     $output .= '<div>';
-    $output .= '<div class="labels"><label for="name">'. __('Name', 'securitas-ws').'</label></div>';
+    $output .= '<div class="labels"><label for="name">' . __('Name', 'securitas-ws') . '</label></div>';
     $output .= '<input type="text" class="name" value="" id="firstname" name="firstname">';
     $output .= '</div>';
     $output .= '<div>';
-    $output .= '<div class="labels"><label for="lastname">'. __('Last name', 'securitas-ws').'</label></div>';
+    $output .= '<div class="labels"><label for="lastname">' . __('Last name', 'securitas-ws') . '</label></div>';
     $output .= '<input type="text" class="lastname" value="" id="familyname" name="familyname">';
     $output .= '</div>';
     $output .= '<div class="pp-select">';
-    $output .= '<div class="labels"><label for="position">'. __('Choose role', 'securitas-ws').'</label></div>';
+    $output .= '<div class="labels"><label for="position">' . __('Choose role', 'securitas-ws') . '</label></div>';
     $output .= '<select id="position">';
-    $output .= '<option value="2161001" >'. __('Sales', 'securitas-ws').'</option>';
-    $output .= '<option value="2163001" >'. __('Technician', 'securitas-ws').'</option>';
-    $output .= '<option value="2164001" >'. __('Marketing', 'securitas-ws').'</option>';
-    $output .= '<option value="3065001" >'. __('Other', 'securitas-ws').'</option>';
+    $output .= '<option value="2161001" >' . __('Sales', 'securitas-ws') . '</option>';
+    $output .= '<option value="2163001" >' . __('Technician', 'securitas-ws') . '</option>';
+    $output .= '<option value="2164001" >' . __('Marketing', 'securitas-ws') . '</option>';
+    $output .= '<option value="3065001" >' . __('Other', 'securitas-ws') . '</option>';
     $output .= '</select>';
     $output .= '</div>';
     $output .= '<div>';
-    $output .= '<div class="labels"><label for="mobile">'. __('Mobile', 'securitas-ws').'</label></div>';
+    $output .= '<div class="labels"><label for="mobile">' . __('Mobile', 'securitas-ws') . '</label></div>';
     $output .= '<input type="text" class="mobile" value="" id="cellphone" name="cellphone">';
     $output .= '</div>';
     $output .= '<div>';
-    $output .= '<div class="labels"><label for="email">'. __('E-mail', 'securitas-ws').'</label></div>';
+    $output .= '<div class="labels"><label for="email">' . __('E-mail', 'securitas-ws') . '</label></div>';
     $output .= '<input type="text" class="email" value="" id="email" name="email">';
     $output .= '</div>';
     $output .= '<div class="pp-wrap">';
     $output .= '<input type="checkbox" value="1" class="pp-check" name="admin" id="admin" />';
-    $output .= '<div class="pp-checkbox">'. __('Technical Administrator', 'securitas-ws').'</div>';
+    $output .= '<div class="pp-checkbox">' . __('Technical Administrator', 'securitas-ws') . '</div>';
     $output .= '</div>';
     $output .= '<div>';
     $output .= '<input type="checkbox" value="1" class="pp-check" name="lc"  id="lc" />';
-    $output .= '<div class="pp-checkbox">'. __('Elegible LC', 'securitas-ws').'</div>';
+    $output .= '<div class="pp-checkbox">' . __('Elegible LC', 'securitas-ws') . '</div>';
     $output .= '</div>';
     $output .= '<div>';
     $output .= '<input type="checkbox" value="1" class="pp-check" name="portal" id="portal" />';
-    $output .= '<div class="pp-checkbox">'. __('Elegible Portal', 'securitas-ws').'</div>';
+    $output .= '<div class="pp-checkbox">' . __('Elegible Portal', 'securitas-ws') . '</div>';
     $output .= '</div>';
     $output .= '</div>';
     $output .= '<p><!--staff-info--></p>';
@@ -432,7 +453,7 @@ class SecuritasWS {
     $output .= '</li>';
     $output .= '</ul>';
     $output .= '</div>';
-    $output .= '<div id="success"></div>';
+    $output .= '<div id="success"></div><div id="loading"><img src="' . $pluginRoot . '/img/ajax-loader.gif" alt=""></div>';
 
     echo $output;
   }
@@ -456,17 +477,40 @@ class SecuritasWS {
    * @param type $wpuserid 
    */
   public function insertPerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $original_lc, $portal, $idcompany, $companyname, $position, $ended, $wpuserid) {
-    $securitasUserId = $this->lime->insertPerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $wpuserid);
-    if ($securitasUserId > 0 && ($portal == 1 || $admin == 1)) {
-      $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin, $securitasUserId);
-      if (gettype($userData) == 'array') {  //the user was just created - send a welcome email   
-        $this->sendEmail('portal', $firstname, $familyname, $cellphone, $email, $lc, $portal, $userData);
-        //add the wpuserid to the WebService
-        $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $securitasUserId, $admin, $lc, $portal, $idcompany, $position, $ended, $userData['user_id']);
-      }
+    error_reporting(E_ERROR | E_PARSE);
+    $exists = $this->lime->personExists($email);
+    //print_r($exists);
+    switch ($exists['idperson']) {
+      case 'error':
+        $response = array('status' => 'Error');
+        break;
+      case '0':   //add the person to the WS
+        $securitasUserId = $this->lime->insertPerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $wpuserid);
+        if ($securitasUserId > 0 && ($portal == 1 || $admin == 1)) {
+          $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin, $securitasUserId);
+          if (gettype($userData) == 'array') {  //the user was just created - send a welcome email   
+            $this->sendEmail('portal', $firstname, $familyname, $cellphone, $email, $lc, $portal, $userData);
+            //add the wpuserid to the WebService
+            $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $securitasUserId, $admin, $lc, $portal, $idcompany, $position, $ended, $userData['user_id']);
+          }
+        }
+        $response = array('status' => 'Added successfully');
+        break;
+      default:
+        $response = array('status' => 'User already exists');
+        break;
     }
+    
+    //return the result to ajax, write it as json
+    header('Cache-Control: no-cache, must-revalidate');
+    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Content-type: application/json');
+    echo json_encode($response);
   }
-
+  
+  
+  
+  
   /**
    * Update person in WS, requires $idperson
    * An insert requires companyId and -1 as $idperson  
@@ -488,15 +532,15 @@ class SecuritasWS {
    * @return type 
    */
   public function updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $original_lc, $portal, $idcompany, $companyname, $position, $ended, $wpuserid) {
+    $result = array('status' => 'Error');
     //do the update on the WS
     $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $wpuserid);
     if ($success) {
-      echo "update successful, lc: " . $lc . ' original_lc: ' . $original_lc;
+      $result['WSUser'] = 'updated';
 
       $wpUserUpdated = false;
       $wpUserId = $wpuserid;
       if ($wpUserId != 0) {   //person already wp-user, update the wp-data     
-        echo 'wp-userid: ' . $wpUserId . ' tech: ' . $admin;
         update_user_meta($wpUserId, 'first_name', $firstname);
         update_user_meta($wpUserId, 'last_name', $familyname);
         update_user_meta($wpUserId, 'sec_companyname', $companyname);
@@ -504,27 +548,34 @@ class SecuritasWS {
         update_user_meta($wpUserId, 'sec_technician', $admin);
         update_user_meta($wpUserId, 'sec_securitasid', $idperson);
         $wpUserUpdated = true;
+        $result['WPUser'] = 'updated, ' . $wpUserId;
+        $result['status'] = 'Success';
       }
 
       if ($portal == 1 && $wpUserId == 0) {   //if access to the portal and no wp-useridthen create a wp-user
         $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin, $idperson);
-        //print_r($userData);
+        $result['WPUser'] = $userData['user_id'];
         if (gettype($userData) == 'array') {  //the user was just created - send a welcome email   
           $wpUserUpdated = true;
           $this->sendEmail('portal', $firstname, $familyname, $cellphone, $email, $lc, $portal, $userData);
           $idperson = $userData[sec_securitasid];
+          $result['WelcomeEmail'] = $email;
           //add the wpuserid to the WebService
           $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $userData['user_id']);
+          $result['WPUserIdToWS'] = 'sucess';
+          $result['status'] = 'Success';
         }
       }
 
       if ($admin == 1 && $wpUserId == 0) {   //if adminster the portal then create a wp-user
         $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin, $idperson);
-        //print_r($userData);
+        $result['WPUser'] = 'created';
+        $result['status'] = 'Success';
         if (gettype($userData) == 'array') {  //the user was just created update WebService with wpuserid  
           $wpUserUpdated = true;
           $idperson = $userData[sec_securitasid];
           $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $userData['user_id']);
+          $result['WSUser'] = 'updated';
         }
       }
 
@@ -532,8 +583,17 @@ class SecuritasWS {
       if ($original_lc != $lc) {  //the LC eligibility has been changed, send mail to securitas
         echo 'send email';
         $this->sendEmail('lc', $firstname, $familyname, $cellphone, $email, $lc, $portal);
+        $result['EmailSecuritasSupport'] = 'sent';
+        $result['status'] = 'Success';
       }
     }
+    
+    
+    //return the result to ajax, write it as json
+    header('Cache-Control: no-cache, must-revalidate');
+    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Content-type: application/json');
+    echo json_encode($result);
   }
 
   /**
@@ -588,10 +648,10 @@ class SecuritasWS {
         $url = get_bloginfo('url');
 
         $subject = __("Welcome to Securitas Partner Portal", 'securitas-ws');
-        $message = __("Hej", 'securitas-ws') . " $firstname $familyname <br>";
-        $message .= __("Du har registrerats som användare på Securitas larmcentrals parterportal.", 'securitas-ws') . " <br><br>";
+        $message = __("Hello", 'securitas-ws') . " $firstname $familyname <br>";
+        $message .= __("You have been added as a user at Securitas alarmcentral parterportal.", 'securitas-ws') . " <br><br>";
         $message .= '<a href="' . $url . '">' . $url . '</a><br><br>';
-        $message .= __("Ditt användarnamn är", 'securitas-ws') . $username . __("och lösenordet är", 'securitas-ws') . $password . "<br>";
+        $message .= __("Your username is", 'securitas-ws') .' <strong>'. $username .' </strong>'. __("and password is ", 'securitas-ws') .' <strong>'.  $password .' </strong>'.  "<br>";
 
         $to = $email;
         $from = get_option('sec_support_email_sender');
@@ -659,7 +719,10 @@ class SecuritasWS {
      */
     try {
       $user_name = $this->createUserName($user_email);
-      $user_id = username_exists($user_name);
+      $data = username_exists($user_name);
+      print_r($data);
+
+
       if ($user_id == NULL) {  //new wp-user
         $random_password = wp_generate_password(8, false);
         $user_id = wp_create_user($user_name, $random_password, $user_email);
@@ -716,7 +779,7 @@ class SecuritasWS {
 
 
 
-load_theme_textdomain( 'securitas-ws', get_template_directory() . '/languages' );
+load_theme_textdomain('securitas-ws', get_template_directory() . '/languages');
 
 //echo get_template_directory() . '/languages';
 
@@ -767,12 +830,10 @@ function securitasWSdebugOutput() {
  * Wordpress admin pages
  * *********************************** */
 
-
-
-
 function securitasws_init() {
-  load_plugin_textdomain( 'securitas-ws', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+  load_plugin_textdomain('securitas-ws', false, dirname(plugin_basename(__FILE__)) . '/languages/');
 }
+
 add_action('init', 'securitasws_init');
 
 
@@ -816,7 +877,7 @@ function wSOptionsPage() {
   echo '<p><input type="text" name="support_email" value="' . $support_email . '" size="50">  &nbsp; ' . __("The Securitas support email address", 'securitas-ws') . '</p>';
   echo '<p><input type="text" name="support_email_sender" value="' . $support_email_sender . '" size="50">  &nbsp; 
        ' . _e("The Securitas support email senders name and email. E.g. noreply@securitas.com", 'securitas-ws') . '</p>';
-  echo '<p class="submit"> <input type="submit" name="Submit" class="button-primary" value="'.__('Save Changes', 'securitas-ws').'" /></p>';
+  echo '<p class="submit"> <input type="submit" name="Submit" class="button-primary" value="' . __('Save Changes', 'securitas-ws') . '" /></p>';
   echo '</form>';
   echo '</div>';
 }
