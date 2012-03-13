@@ -14,21 +14,21 @@ get_header();
             <!-- #main Starts -->
             <?php woo_main_before(); ?>
             <div id="main">                     
-<?php woo_loop_before();  ?>
-	
-     <?php  if(get_user_meta(get_current_user_id(), 'sec_technician', true) == '1'):  ?>         
-        <?php while (have_posts()) : the_post(); ?>
-            <?php woo_get_template_part('content', 'page'); ?>
-            <?php 
-              $idperson = $_REQUEST['idperson'];
-              securitasWSeditStaff($idperson);
-            ?>
-        <?php endwhile; // end of the loop. ?>
-      <? else: ?>
-       Not allowed
-      <? endif; ?>         
-  
-<?php woo_loop_after(); ?>     
+              <?php woo_loop_before();  ?>
+
+                  <?php  if(get_user_meta(get_current_user_id(), 'sec_technician', true) == '1'):  ?>         
+                      <?php while (have_posts()) : the_post(); ?>
+                          <?php woo_get_template_part('content', 'page'); ?>
+                          <?php 
+                            $idperson = $_REQUEST['idperson'];
+                            securitasWSeditStaff($idperson);
+                          ?>
+                      <?php endwhile; // end of the loop. ?>
+                    <? else: ?>
+                    Not allowed
+                    <? endif; ?>         
+
+              <?php woo_loop_after(); ?>     
             </div><!-- /#main -->
             <?php woo_main_after(); ?>
     

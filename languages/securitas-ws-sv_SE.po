@@ -19,53 +19,370 @@ msgstr ""
 "X-Poedit-SearchPath-0: .\n"
 "X-Textdomain-Support: yes"
 
-#: securitas-ws.php:799
+#: securitas-ws.php:1358
 #@ default
 msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
-#: securitas-ws.php:850
+#: securitas-ws.php:1434
 #@ blank
 msgid "Securitas WebService Settings"
 msgstr ""
 
-#: securitas-ws.php:853
+#: securitas-ws.php:1437
 #@ securitas-ws
 msgid "CompanyId"
 msgstr "Företags ID"
 
-#: securitas-ws.php:856
+#: securitas-ws.php:1440
 #@ securitas-ws
 msgid "Enter the company id used in your web service."
 msgstr ""
 
-#: securitas-ws.php:860
+#: securitas-ws.php:1444
 #@ securitas-ws
 msgid "Company name"
 msgstr ""
 
-#: securitas-ws.php:863
+#: securitas-ws.php:1447
 #@ securitas-ws
 msgid "Enter the company name."
 msgstr ""
 
-#: securitas-ws.php:867
+#: securitas-ws.php:1451
 #@ securitas-ws
 msgid "Securitas WebService user id"
 msgstr ""
 
-#: securitas-ws.php:870
+#: securitas-ws.php:1454
 #@ securitas-ws
 msgid "Enter the Securitas WebService user id."
 msgstr ""
 
-#: securitas-ws.php:874
+#: securitas-ws.php:1458
 #@ securitas-ws
 msgid "Technician administrator"
 msgstr ""
 
-#: securitas-ws.php:877
+#: securitas-ws.php:1461
 #@ securitas-ws
 msgid "User can add and remove personel on this site."
+msgstr ""
+
+#: securitas-widget.php:26
+#@ securitas-ws
+msgid "Your contact with Securitas"
+msgstr ""
+
+#: securitas-ws.php:159
+#@ securitas-ws
+msgid "Portal"
+msgstr ""
+
+#: securitas-ws.php:162
+#@ securitas-ws
+msgid "LC"
+msgstr ""
+
+#: securitas-ws.php:165
+#@ securitas-ws
+msgid "Administrator"
+msgstr ""
+
+#: securitas-ws.php:172
+#: securitas-ws.php:309
+#: securitas-ws.php:524
+#: securitas-ws.php:650
+#: securitas-ws.php:950
+#: securitas-ws.php:955
+#@ securitas-ws
+msgid "Name"
+msgstr ""
+
+#: securitas-ws.php:175
+#: securitas-ws.php:313
+#: securitas-ws.php:528
+#: securitas-ws.php:654
+#@ securitas-ws
+msgid "Last name"
+msgstr ""
+
+#: securitas-ws.php:178
+#@ securitas-ws
+msgid "Function"
+msgstr ""
+
+#: securitas-ws.php:181
+#: securitas-ws.php:326
+#: securitas-ws.php:545
+#: securitas-ws.php:671
+#@ securitas-ws
+msgid "E-mail"
+msgstr ""
+
+#: securitas-ws.php:184
+#: securitas-ws.php:330
+#: securitas-ws.php:541
+#: securitas-ws.php:667
+#: securitas-ws.php:952
+#@ securitas-ws
+msgid "Mobile"
+msgstr ""
+
+#: securitas-ws.php:187
+#@ securitas-ws
+msgid "Eligibility"
+msgstr ""
+
+#: securitas-ws.php:200
+#@ securitas-ws
+msgid "Edit"
+msgstr ""
+
+#: securitas-ws.php:305
+#@ securitas-ws
+msgid "Company / Employer:"
+msgstr ""
+
+#: securitas-ws.php:317
+#: securitas-ws.php:532
+#: securitas-ws.php:658
+#@ securitas-ws
+msgid "Choose role"
+msgstr ""
+
+#: securitas-ws.php:319
+#: securitas-ws.php:534
+#: securitas-ws.php:660
+#@ securitas-ws
+msgid "Sales"
+msgstr ""
+
+#: securitas-ws.php:320
+#: securitas-ws.php:535
+#: securitas-ws.php:661
+#@ securitas-ws
+msgid "Technician"
+msgstr ""
+
+#: securitas-ws.php:321
+#: securitas-ws.php:536
+#: securitas-ws.php:662
+#@ securitas-ws
+msgid "Marketing"
+msgstr ""
+
+#: securitas-ws.php:322
+#: securitas-ws.php:537
+#: securitas-ws.php:663
+#@ securitas-ws
+msgid "Other"
+msgstr ""
+
+#: securitas-ws.php:334
+#@ securitas-ws
+msgid "Update"
+msgstr ""
+
+#: securitas-ws.php:356
+#@ securitas-ws
+msgid "The passwords does not match"
+msgstr ""
+
+#: securitas-ws.php:385
+#@ securitas-ws
+msgid "Change password"
+msgstr ""
+
+#: securitas-ws.php:389
+#@ securitas-ws
+msgid "Confirm password"
+msgstr ""
+
+#: securitas-ws.php:393
+#@ securitas-ws
+msgid "Change"
+msgstr ""
+
+#: securitas-ws.php:550
+#: securitas-ws.php:676
+#@ securitas-ws
+msgid "Technical Administrator"
+msgstr ""
+
+#: securitas-ws.php:554
+#: securitas-ws.php:680
+#@ securitas-ws
+msgid "Elegible LC"
+msgstr ""
+
+#: securitas-ws.php:558
+#: securitas-ws.php:684
+#@ securitas-ws
+msgid "Elegible Portal"
+msgstr ""
+
+#: securitas-ws.php:568
+#: securitas-ws.php:691
+#@ securitas-ws
+msgid "Save"
+msgstr ""
+
+#: securitas-ws.php:741
+#@ securitas-ws
+msgid "Added successfully"
+msgstr ""
+
+#: securitas-ws.php:744
+#@ securitas-ws
+msgid "User already exists"
+msgstr ""
+
+#: securitas-ws.php:768
+#: securitas-ws.php:773
+#: securitas-ws.php:869
+#: securitas-ws.php:882
+#: securitas-ws.php:883
+#: securitas-ws.php:890
+#: securitas-ws.php:903
+#@ securitas-ws
+msgid "Success"
+msgstr ""
+
+#: securitas-ws.php:795
+#@ securitas-ws
+msgid "Error password not changed"
+msgstr ""
+
+#: securitas-ws.php:799
+#@ securitas-ws
+msgid "Password changed"
+msgstr ""
+
+#: securitas-ws.php:824
+#@ securitas-ws
+msgid "Wrong user name"
+msgstr ""
+
+#: securitas-ws.php:830
+#@ securitas-ws
+msgid "The new password is sent to your email"
+msgstr ""
+
+#: securitas-ws.php:942
+#@ securitas-ws
+msgid "NO ACCESS"
+msgstr ""
+
+#: securitas-ws.php:944
+#@ securitas-ws
+msgid "ACCESS"
+msgstr ""
+
+#: securitas-ws.php:947
+#@ securitas-ws
+msgid "LC eligibility changed"
+msgstr ""
+
+#: securitas-ws.php:948
+#@ securitas-ws
+msgid "LC eligibility changed to"
+msgstr ""
+
+#: securitas-ws.php:948
+#@ securitas-ws
+msgid "for"
+msgstr ""
+
+#: securitas-ws.php:949
+#: securitas-ws.php:954
+#@ securitas-ws
+msgid "Company"
+msgstr ""
+
+#: securitas-ws.php:951
+#: securitas-ws.php:956
+#@ securitas-ws
+msgid "Email"
+msgstr ""
+
+#: securitas-ws.php:953
+#@ securitas-ws
+msgid "The person who did this change is"
+msgstr ""
+
+#: securitas-ws.php:966
+#@ securitas-ws
+msgid "Welcome to Securitas Partner Portal"
+msgstr ""
+
+#: securitas-ws.php:967
+#@ securitas-ws
+msgid "Hello"
+msgstr ""
+
+#: securitas-ws.php:968
+#@ securitas-ws
+msgid "You have been added as a user at Securitas alarmcentral parterportal."
+msgstr ""
+
+#: securitas-ws.php:970
+#@ securitas-ws
+msgid "Your username is"
+msgstr ""
+
+#: securitas-ws.php:970
+#@ securitas-ws
+msgid "and password is "
+msgstr ""
+
+#: securitas-ws.php:978
+#@ securitas-ws
+msgid "Your new password"
+msgstr ""
+
+#: securitas-ws.php:979
+#@ securitas-ws
+msgid "Your have requested a new temporary password"
+msgstr ""
+
+#: securitas-ws.php:980
+#@ securitas-ws
+msgid "Your username is "
+msgstr ""
+
+#: securitas-ws.php:980
+#@ securitas-ws
+msgid " and new temporary password is "
+msgstr ""
+
+#: securitas-ws.php:1236
+#@ securitas-ws
+msgid "Please send me a new password"
+msgstr ""
+
+#: securitas-ws.php:1401
+#@ securitas-ws
+msgid "Updated the URL"
+msgstr ""
+
+#: securitas-ws.php:1406
+#@ securitas-ws
+msgid "The Lime Web Service URL"
+msgstr ""
+
+#: securitas-ws.php:1407
+#@ securitas-ws
+msgid "The Securitas support email address"
+msgstr ""
+
+#: securitas-ws.php:1409
+#@ securitas-ws
+msgid "The Securitas support email senders name and email. E.g. noreply@securitas.com"
+msgstr ""
+
+#: securitas-ws.php:1414
+#@ securitas-ws
+msgid "Save Changes"
 msgstr ""
 

@@ -13,6 +13,8 @@ $companyname = $_POST['companyname'];
 $position = $_POST['position'];
 $ended = $_POST['ended'];
 $wpuserid = $_POST['wpuserid'];
+$password = $_POST['password'];
+$password2 = $_POST['password2'];
 require_once(__DIR__ . '/../../../wp-config.php');
 require_once('securitas-ws.php');
 $sws = new SecuritasWS();

@@ -5,12 +5,18 @@
  */
 class LimeWService {
 
-  const debug = true;
+  public $debug = false;
 
   public $client = null;
   public $logFile = null;
 
   public function __construct($url) {
+    if (get_option("sec_log") == '1') {
+      $this->debug = true;
+    } else {
+      $this->debug = false;
+    }
+
     $this->logFile = __DIR__ . '/ws.log';
     ini_set('soap.wsdl_cache', WSDL_CACHE_NONE);
     $options = array(
@@ -65,7 +71,6 @@ class LimeWService {
     return $response;
   }
 
-
   /**
    * Select from company
    * $count is defaulted to 0 which means get all posts
@@ -96,6 +101,7 @@ class LimeWService {
             <field>coworker</field>
             <field>coworker.name</field>
             <field>coworker.phone</field>
+            <field>coworker.email</field>
             <field>product</field>
          </fields>
          <conditions>
@@ -107,22 +113,20 @@ class LimeWService {
 		  </query>');
 
       try {
-        if (self::debug) {
-          $this->saveToFile("lime.log", print_r($params, true), 'DEBUG');
-        }
+        $this->saveToFile($this->logFile, print_r($params, true), 'DEBUG');
         $response = $this->client->GetXmlQueryData($params);
-        $this->saveToFile("lime.log", $this->client->__getLastResponse(), 'INFO');
+        $this->saveToFile($this->logFile, $this->client->__getLastResponse(), 'INFO');
         $response = $this->client->__getLastResponse();
         $xml = $this->responseToSimpleXML($response, 'select');
         return $xml;
       } catch (exception $e) {
-        $this->saveToFile("lime.log", 'Exception in selectFromCompany()', 'ERROR');
-        $this->saveToFile("lime.log", $e->getmessage(), 'ERROR');
+        $this->saveToFile($this->logFile, 'Exception in selectFromCompany()', 'ERROR');
+        $this->saveToFile($this->logFile, $e->getmessage(), 'ERROR');
         echo "Exception in selectFromCompany()<br>";
         die($e->getmessage());
       }
     } else {
-      $this->saveToFile("lime.log", 'Exception in selectFromCompany(). No companyId ', 'ERROR');
+      $this->saveToFile($this->logFile, 'Exception in selectFromCompany(). No companyId ', 'ERROR');
     }
   }
 
@@ -153,17 +157,15 @@ class LimeWService {
             </data>'
     );
     try {
-      if (self::debug) {
-        $this->saveToFile("lime.log", print_r($params, true), 'DEBUG');
-      }
+      $this->saveToFile($this->logFile, print_r($params, true), 'DEBUG');
       $response = $this->client->UpdateData($params);
-      $this->saveToFile("lime.log", $this->client->__getLastResponse(), 'INFO');
+      $this->saveToFile($this->logFile, $this->client->__getLastResponse(), 'INFO');
       $response = $this->client->__getLastResponse();
       $xml = $this->responseToSimpleXML($response, 'update');
       return $xml;
     } catch (exception $e) {
-      $this->saveToFile("lime.log", 'Exception in updateCompany()', 'ERROR');
-      $this->saveToFile("lime.log", $e->getmessage(), 'ERROR');
+      $this->saveToFile($this->logFile, 'Exception in updateCompany()', 'ERROR');
+      $this->saveToFile($this->logFile, $e->getmessage(), 'ERROR');
       echo "Exception in updateCompany()<br>";
       die($e->getmessage());
     }
@@ -269,7 +271,7 @@ class LimeWService {
    */
   private function doWSQuery($params, $queryType, $callerFunction = 'xxx') {
     try {
-      if (self::debug) {
+      if ($this->debug) {
         $this->saveToFile($this->logFile, print_r($params, true), 'DEBUG');
       }
       switch ($queryType) {
@@ -336,20 +338,19 @@ class LimeWService {
     } else {
       $this->saveToFile($this->logFile, 'Exception in selectFromPerson(). No personId ', 'ERROR');
       return false;
-    }      
+    }
   }
 
-  
-    /**
-     * Does the person exist, check by emsil
-     * returns a data array for true
-     * returns false if person doesn't exist
-     * 
-     * @param type $email
-     * @return boolean 
-     */
-    public function personExists($email) {
-      $data = array('idperson' => '0');
+  /**
+   * Does the person exist, check by emsil
+   * returns a data array for true
+   * returns false if person doesn't exist
+   * 
+   * @param type $email
+   * @return boolean 
+   */
+  public function personExists($email) {
+    $data = array('idperson' => '0');
     if (isset($email)) {
       $params = array('query' =>
           '<query distinct="0" top="1">
@@ -370,22 +371,21 @@ class LimeWService {
 		  </query>');
 
       $xml = $this->doWSQuery($params, 'select', 'personExists()');
-      if(!isset($xml->person->attributes()->idperson)){
+      if (!isset($xml->person->attributes()->idperson)) {
         //person doesn't exist
-      } else { 
-        $data['idperson'] = (string)$xml->person->attributes()->idperson;
-        $data['email'] = (string)$xml->person->attributes()->email;
-        $data['wpuserid'] = (string)$xml->person->attributes()->wpuserid;
+      } else {
+        $data['idperson'] = (string) $xml->person->attributes()->idperson;
+        $data['email'] = (string) $xml->person->attributes()->email;
+        $data['wpuserid'] = (string) $xml->person->attributes()->wpuserid;
       }
-      return $data; 
+      return $data;
     } else {
       $this->saveToFile($this->logFile, 'Exception in personExists(). No email submitted ', 'ERROR');
       $data['idperson'] = 'error';
       return $data;
-    }      
+    }
   }
-  
-  
+
   /**
    * Update or insert a record into Person
    * Position is defaulted to '3065001' which translates to 'other'
@@ -422,6 +422,38 @@ class LimeWService {
     }
   }
 
+  /**
+   * Update person but with a smaller set of patrameters
+   * @param type $firstname
+   * @param type $familyname
+   * @param type $cellphone
+   * @param type $email
+   * @param type $idperson
+   * @param type $position
+   * @return boolean 
+   */
+  public function updateProfile($firstname, $familyname, $cellphone, $email, $idperson, $position) {
+    if (isset($idperson)) {
+      $params = array('data' =>
+          '<data>
+              <person
+                idperson="' . $idperson . '"
+                firstname="' . $firstname . '"
+                familyname="' . $familyname . '"
+                position="' . $position . '"
+                email="' . $email . '"
+                cellphone="' . $cellphone . '"
+              />
+            </data>'
+      );
+      $xml = $this->doWSQuery($params, 'update', 'updateProfile()');
+      //return $xml;
+      return true;
+    } else {
+      $this->saveToFile($this->logFile, 'Exception in updateProfile(). No idperson submitted', 'ERROR');
+      return false;
+    }
+  }
 
   /**
    * Update or insert a record into Person
@@ -452,19 +484,14 @@ class LimeWService {
       );
       $xml = $this->doWSQuery($params, 'update', 'insertPerson()');
       $idnew = $xml->record[0]->attributes()->idnew;
-      $idnew = (string)$idnew[0];
+      $idnew = (string) $idnew[0];
       return $idnew;
     } else {
       $this->saveToFile($this->logFile, 'Exception in updatePerson(). No personId ', 'ERROR');
       return 0;
     }
   }
-  
 
-  
-  
-  
-  
   /**
    * Convert the response to simpleXML object
    * @param <type> $response
@@ -510,16 +537,15 @@ class LimeWService {
    * @param <type> $data
    */
   public function saveToFile($filename, $data, $type = 'INFO') {
-    if (self::debug) {
-      $data = (string)$data;
+    if ($this->debug) {
+      $data = (string) $data;
       $fh = fopen($filename, 'a') or die("can't open file");
       fwrite($fh, "\n" . date('Y-m-d H:m:s') . ' [' . $type . '] ');
       fwrite($fh, $data);
       fclose($fh);
     }
-  }  
-  
-  
+  }
+
   public function debug() {
     $client = $this->client;
     echo "REQUEST HEADERS:" . $client->__getLastRequestHeaders() . "<br />";
