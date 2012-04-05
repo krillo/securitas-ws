@@ -103,11 +103,12 @@ class LimeWService {
             <field>coworker.phone</field>
             <field>coworker.email</field>
             <field>product</field>
+            <field>installationno</field>
          </fields>
          <conditions>
             <condition operator="=">
               <exp type="field">idcompany</exp>
-              <exp type="numeric">6016001</exp>
+              <exp type="numeric">'. $id .'</exp>
             </condition>
         </conditions>
 		  </query>');

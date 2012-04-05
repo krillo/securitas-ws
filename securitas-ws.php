@@ -60,7 +60,8 @@ class SecuritasWS {
 
   /**
    * Get get the securitas contact information
-   * The first time store it as user_meta 
+   * The first time store it as user_meta
+   * Get also installationno 
    * 
    * @param type $idcompany 
    */
@@ -68,18 +69,22 @@ class SecuritasWS {
     $wpUserId = get_current_user_id();
     $secContactDate = get_user_meta($wpUserId, 'sec_contact_date', true);
     if ($secContactDate == '' || $this->isOldData($secContactDate)) {
-      $idcompany = get_user_meta($wpUserId, 'sec_idcompany', true);
+      $idcompany = get_user_meta($wpUserId, 'sec_idcompany', true);     
       $xml = $this->lime->selectFromCompany($idcompany);
       $coworkername = 'coworker.name';
       $coworkerphone = 'coworker.phone';
       $coworkeremail = 'coworker.email';
+      $installationno = 'installationno';
       $data['name'] = (string) $xml->company->attributes()->$coworkername;
       $data['phone'] = (string) $xml->company->attributes()->$coworkerphone;
       $data['email'] = (string) $xml->company->attributes()->$coworkeremail;
+      $data['installationno'] = (string) $xml->company->attributes()->$installationno;
+      echo 'krillo ' . $data['installationno'];
       update_user_meta($wpUserId, 'sec_contact_name', $data['name']);
       update_user_meta($wpUserId, 'sec_contact_phone', $data['phone']);
       update_user_meta($wpUserId, 'sec_contact_email', $data['email']);
       update_user_meta($wpUserId, 'sec_contact_date', date("Y-m-d"));
+      update_user_meta($wpUserId, 'sec_installationno', $data['installationno']);      
     } else {
       $data['name'] = get_user_meta($wpUserId, 'sec_contact_name', true);
       $data['phone'] = get_user_meta($wpUserId, 'sec_contact_phone', true);
@@ -248,6 +253,7 @@ class SecuritasWS {
             data: dataString,
             cache: false,
             success: function(data){
+              jQuery("#loading").hide();
                //json array returned
               console.log(data);
               jQuery("#success").html(data.status);
@@ -366,6 +372,7 @@ class SecuritasWS {
               data: dataString,
               cache: false,
               success: function(data){
+                jQuery("#loading").hide();
                 //json array returned
                 console.log(data);                
                 jQuery("#success").html(data.status);
@@ -439,7 +446,7 @@ class SecuritasWS {
       var companyname = jQuery("#companyname").val();  
       var original_lc = jQuery("#original_lc").val();    
       var position = jQuery("#position").val(); 
-      var wpuserid = jQuery("#wpuserid").val();       
+      var wpuserid = jQuery("#wpuserid").val();            
 
       //get the checkboxes default them to 0
       var admin = jQuery("#admin:checked").val();
@@ -588,9 +595,13 @@ class SecuritasWS {
   public static function addPerson($companyId) {
     $pluginRoot = plugins_url("", __FILE__);
     $actionFile = $pluginRoot . "/api_lime_add_person.php";
+    $s0 = 'Error 4';
+    $s1 = __('Added successfully', 'securitas-ws');
+    $s2 = __('User already existed, and is now activated on portal', 'securitas-ws');
 
     echo '<script type="text/javascript">
   jQuery(document).ready(function(){
+
 
     //progress wheel
     jQuery("#loading")
@@ -601,6 +612,19 @@ class SecuritasWS {
       .ajaxStop(function() {
         jQuery(this).hide();
     });
+
+
+/*
+jQuery.ajaxSetup({
+  beforeSend: function() {
+     $("#loading").show()
+  },
+  complete: function(){
+     $("#loading").hide()
+  },
+  success: function() {}
+});
+*/
 
     jQuery("#save-person").click(function(event) {
       event.preventDefault();
@@ -629,8 +653,26 @@ class SecuritasWS {
             data: dataString,
             cache: false,
             success: function(data){  //json array returned
+              jQuery("#loading").hide();
+              var s = "ok;"
               console.log(data);
-              jQuery("#success").html(data.status);
+              var status = data.status;
+              switch(status){              
+                case 0:
+                  s = "' . $s0 . '";
+                  break;
+                case 1:
+                  s = "' . $s1 . '";
+                  break;
+                case 2:
+                  s = "' . $s2 . '";
+                  break;
+                default:
+                  s = "error 3";
+              }
+              
+              jQuery("#success").html(s);
+              //jQuery("#success").html(data.status);
             }
         });
 
@@ -726,7 +768,7 @@ class SecuritasWS {
     //print_r($exists);
     switch ($exists['idperson']) {
       case 'error':
-        $response = array('status' => 'Error');
+        $response = array('status' => 0);
         break;
       case '0':   //add the person to the WS
         $securitasUserId = $this->lime->insertPerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $wpuserid);
@@ -738,10 +780,24 @@ class SecuritasWS {
             $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $securitasUserId, $admin, $lc, $portal, $idcompany, $position, $ended, $userData['user_id']);
           }
         }
-        $response = array('status' => __('Added successfully', 'securitas-ws'));
+        //$response = array('status' => __('Added successfully', 'securitas-ws'));
+        $response = array('status' => 1);
         break;
       default:
-        $response = array('status' => __('User already exists', 'securitas-ws'));
+        //user exists on ws - activate her
+        $securitasUserId = $exists['idperson'];
+        $this->lime->updateProfile($firstname, $familyname, $cellphone, $email, $securitasUserId, $position);
+        if ($securitasUserId > 0 && ($portal == 1 || $admin == 1)) {
+          $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin, $securitasUserId, $cellphone);
+          if (gettype($userData) == 'array') {  //the user was just created - send a welcome email   
+            $this->sendEmail('portal', $firstname, $familyname, $cellphone, $email, $lc, $portal, $userData);
+            //add the wpuserid to the WebService
+            $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $securitasUserId, $admin, $lc, $portal, $idcompany, $position, $ended, $userData['user_id']);
+          }
+        }
+        //$response = array('status' => __('User already existed, and is now activated on portal', 'securitas-ws'));
+        //$response = array('status' => 'User already existed, and is now activated on portal');
+        $response = array('status' => 2);
         break;
     }
 
@@ -795,7 +851,8 @@ class SecuritasWS {
     $response = array('status' => __('Error password not changed', 'securitas-ws'));
     try {
       $user_id = get_current_user_id();
-      wp_set_password($password, $user_id);
+      wp_set_password($password, $user_id);  //sets the new password but also logs out the user
+      wp_set_auth_cookie($user_id, true);    //set the new authentication cookies - still logged in
       $response['status'] = __('Password changed', 'securitas-ws');
     } catch (Exception $exc) {
       echo $exc->getTraceAsString();
@@ -808,11 +865,6 @@ class SecuritasWS {
     echo json_encode($response);
   }
 
-  
- 
-  
-  
-  
   /**
    * Changes the users password, call this by ajax.
    * returns the result as a data array in json format 
@@ -826,7 +878,7 @@ class SecuritasWS {
       $password = wp_generate_password();
       wp_set_password($password, $user_id);
       $user_info = get_userdata($user_id);
-      $this->sendEmail('newpassword', null, null, null, $user_info->user_email , null, null, null, $username, $password);
+      $this->sendEmail('newpassword', null, null, null, $user_info->user_email, null, null, null, $username, $password);
       $response = array('status' => __('The new password is sent to your email', 'securitas-ws'));
     }
     //return the result to ajax, write it as json
@@ -936,6 +988,7 @@ class SecuritasWS {
     $user_firstname = get_user_meta($user_id, 'first_name', true);
     $user_lastname = get_user_meta($user_id, 'last_name', true);
     $user_company = get_user_meta($user_id, 'sec_companyname', true);
+    $user_company_installationno = get_user_meta($user_id, 'sec_installationno', true);
 
     switch ($type) {
       case 'lc':
@@ -952,8 +1005,10 @@ class SecuritasWS {
         $message .= __("Mobile", 'securitas-ws') . ": $cellphone <br><br><br>";
         $message .= __("The person who did this change is", 'securitas-ws') . ": <br><br>";
         $message .= __("Company", 'securitas-ws') . ": $user_company <br>";
+        $message .= __("Install number", 'securitas-ws') . ": $user_company_installationno <br>";        
         $message .= __("Name", 'securitas-ws') . ": $user_firstname $user_lastname <br>";
         $message .= __("Email", 'securitas-ws') . ": $user_email <br>";
+
 
         $to = get_option('sec_support_email'); //'kundtjanst.alert@securitas.se';
         $from = get_option('sec_support_email_sender');
@@ -1212,28 +1267,28 @@ function securitas_login_func($atts) {
 </script>';
 
 
-/*
-  $args = array(
-      'echo' => true,
-      //'redirect' => site_url('/partnerportal-sverige/?page_id=56'), //site_url( $_SERVER['REQUEST_URI'] ), 
-      'redirect' => site_url('/?page_id=56'),
-      'form_id' => 'loginform',
-      'label_username' => __('Username'),
-      'label_password' => __('Password'),
-      'label_remember' => __('Remember Me'),
-      'label_log_in' => __('Log In'),
-      'id_username' => 'user_login',
-      'id_password' => 'user_pass',
-      'id_remember' => 'rememberme',
-      'id_submit' => 'wp-submit',
-      'remember' => false,
-      'value_username' => NULL,
-      'value_remember' => false);
+  /*
+    $args = array(
+    'echo' => true,
+    //'redirect' => site_url('/partnerportal-sverige/?page_id=56'), //site_url( $_SERVER['REQUEST_URI'] ),
+    'redirect' => site_url('/?page_id=56'),
+    'form_id' => 'loginform',
+    'label_username' => __('Username'),
+    'label_password' => __('Password'),
+    'label_remember' => __('Remember Me'),
+    'label_log_in' => __('Log In'),
+    'id_username' => 'user_login',
+    'id_password' => 'user_pass',
+    'id_remember' => 'rememberme',
+    'id_submit' => 'wp-submit',
+    'remember' => false,
+    'value_username' => NULL,
+    'value_remember' => false);
 
-  wp_login_form($args);
-*/
+    wp_login_form($args);
+   */
 
-  $output = '  <a href="#" name="sec-new-pass" id="sec-new-pass">'.__("Please send me a new password", 'securitas-ws').'</a>
+  $output = '  <a href="#" name="sec-new-pass" id="sec-new-pass">' . __("Please send me a new password", 'securitas-ws') . '</a>
   <div id="success"></div><div id="loading"><img src="' . $pluginRoot . '/img/ajax-loader.gif" alt=""></div>';
 
   return $output;
@@ -1248,24 +1303,23 @@ add_shortcode('securitas_login', 'securitas_login_func');
  * [securitas_login_redir]
  */
 function securitas_login_redir_func($atts) {
-  if(is_user_logged_in()){
+  if (is_user_logged_in()) {
     echo 'logged in';
     //wp_redirect( home_url() ); exit;
-  }else {
+  } else {
     echo 'not logged in';
     //wp_redirect( home_url() ); exit;
   }
-  
 }
-add_shortcode('securitas_login_redir', 'securitas_login_redir_func');
 
+add_shortcode('securitas_login_redir', 'securitas_login_redir_func');
 
 /**
  * preview a username from email address
  * @param type $atts 
  */
 function securitas_gen_username_func($atts) {
-  
+
   $pluginRoot = plugins_url("", __FILE__);
   $actionFile = $pluginRoot . "/api_gen_username.php";
 
@@ -1301,8 +1355,8 @@ function securitas_gen_username_func($atts) {
 
     });
   });
-</script>';  
-  
+</script>';
+
   $output = '
    <form action="#"> 
    <input type="text" id="username" />
@@ -1312,10 +1366,11 @@ function securitas_gen_username_func($atts) {
      </div><div id="loading">
      <img src="' . $pluginRoot . '/img/ajax-loader.gif" alt="">
    </div>
- ';   
+ ';
 
-  echo  $output;
+  echo $output;
 }
+
 add_shortcode('securitas_gen_username', 'securitas_gen_username_func');
 
 
