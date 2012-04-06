@@ -103,7 +103,7 @@ class SecuritasWS {
     $now = time();
     $diff = $now - $sStartTime;
     //echo '$sStartDate: '. $sStartDate . ' $sStartTime: ' . $sStartTime . ' $now: '. $now . ' $diff: ' . $diff;    
-    $oneDay = 24; //*60*60;  //24 hours
+    $oneDay = 24*60*60;  //24 hours
     if ($diff > $oneDay) {
       return true;
     } else {
@@ -988,7 +988,7 @@ jQuery.ajaxSetup({
     $user_firstname = get_user_meta($user_id, 'first_name', true);
     $user_lastname = get_user_meta($user_id, 'last_name', true);
     $user_company = get_user_meta($user_id, 'sec_companyname', true);
-    $user_company_installationno = get_user_meta($user_id, 'sec_installationno', true);
+    $sec_installationno = get_user_meta($user_id, 'sec_installationno', true);
 
     switch ($type) {
       case 'lc':
@@ -1005,7 +1005,7 @@ jQuery.ajaxSetup({
         $message .= __("Mobile", 'securitas-ws') . ": $cellphone <br><br><br>";
         $message .= __("The person who did this change is", 'securitas-ws') . ": <br><br>";
         $message .= __("Company", 'securitas-ws') . ": $user_company <br>";
-        $message .= __("Install number", 'securitas-ws') . ": $user_company_installationno <br>";        
+        $message .= __("Installation number", 'securitas-ws') . ": $sec_installationno <br>";        
         $message .= __("Name", 'securitas-ws') . ": $user_firstname $user_lastname <br>";
         $message .= __("Email", 'securitas-ws') . ": $user_email <br>";
 
