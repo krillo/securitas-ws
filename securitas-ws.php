@@ -79,7 +79,7 @@ class SecuritasWS {
       $data['phone'] = (string) $xml->company->attributes()->$coworkerphone;
       $data['email'] = (string) $xml->company->attributes()->$coworkeremail;
       $data['installationno'] = (string) $xml->company->attributes()->$installationno;
-      echo 'krillo ' . $data['installationno'];
+      //echo 'krillo ' . $data['installationno'];
       update_user_meta($wpUserId, 'sec_contact_name', $data['name']);
       update_user_meta($wpUserId, 'sec_contact_phone', $data['phone']);
       update_user_meta($wpUserId, 'sec_contact_email', $data['email']);
@@ -104,6 +104,7 @@ class SecuritasWS {
     $diff = $now - $sStartTime;
     //echo '$sStartDate: '. $sStartDate . ' $sStartTime: ' . $sStartTime . ' $now: '. $now . ' $diff: ' . $diff;    
     $oneDay = 24*60*60;  //24 hours
+    //$oneDay = 10;  //10 seconds for test only
     if ($diff > $oneDay) {
       return true;
     } else {
