@@ -129,23 +129,29 @@ class SecuritasWS {
 
     if ($fullAccess) {
       $confirm = __("Do you want to remove the user?", 'securitas-ws');
+      echo '<style type="text/css">
+             .hide{display:none;}
+            </style>';
+      
       echo '
 <script type="text/javascript">
   function deletePerson(idperson){
     var answer = confirm ("'.$confirm.'");
     if (answer){
-        jQuery.ajax({
+      var progressDiv = "#progress_" + idperson;
+      var resultDiv = "#result_" + idperson;
+      jQuery(progressDiv).css("display", "block");    //show progress wheel
+      jQuery.ajax({
         type: "POST",
         url: "' . $actionFile . '",
         data: "idperson=" + idperson,
         success: function(data){
-          jQuery("#loading").hide();
-          //json array returned
-          console.log(data);
-          var resultDiv = "#result_" + idperson;
+          jQuery(progressDiv).hide();          
+          console.log(data);   //json array data returned
           if(data.status == "deleted"){
             window.location.reload();
           } else {
+            jQuery(progressDiv).hide();
             jQuery(resultDiv).html(data.status);
           }
         }
@@ -213,7 +219,8 @@ class SecuritasWS {
           $output .= '<input class="wpcf7-submit" type="button" value="X" onclick="deletePerson(' . $value->attributes()->idperson . ');return false;" />';
           $output .= '<input class="wpcf7-submit" type="button" value="' . __('Edit', 'securitas-ws') . '"  onclick="editPerson(' . $value->attributes()->idperson . ');return false;"/>';
           $output .= '</div>';
-          $output .= '<div id="result_'. $value->attributes()->idperson . '"></div>';
+          $output .= '<div id="progress_'. $value->attributes()->idperson . '"></div>';
+          $output .= '<div id="result_'. $value->attributes()->idperson . '" class="hide"><img src="' . $pluginRoot . '/img/ajax-loader.gif" alt="" ></div>';
         }
         $output .= '</div>';
         $output .= '</li>';
