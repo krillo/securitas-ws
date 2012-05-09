@@ -228,10 +228,17 @@ class LimeWService {
            />
          </data>'
       );
+      $this->saveToFile($this->logFile, "Delete person - $idperson", 'INFO');
       $xml = $this->doWSQuery($params, 'update', 'deletePerson()');
-      return $xml;
+      $transactionid = $xml->attributes()->transactionid;
+      if(isset($transactionid)){
+        return true;      
+      } else {
+        return false;      
+      }
     } else {
       $this->saveToFile($this->logFile, 'Exception in deletePerson(). No personId ', 'ERROR');
+      return false;
     }
   }
 
@@ -246,14 +253,14 @@ class LimeWService {
     if ($type == 'code') {
       $codeToName = array(
           '2164001' => 'Administration',
-          '2161001' => 'Säljare',
+          '2161001' => 'S√§ljare',
           '2163001' => 'Tekniker',
           '3065001' => 'Annan');
       return $codeToName[$arg];
     } else {
       $nameToCode = array(
           'Administration' => '2164001',
-          'Säljare' => '2161001',
+          'S√§ljare' => '2161001',
           'Tekniker' => '2163001',
           'Annan' => '3065001');
       return $nameToCode[$arg];
@@ -289,6 +296,7 @@ class LimeWService {
       $this->saveToFile($this->logFile, $this->client->__getLastResponse(), 'INFO');
       $response = $this->client->__getLastResponse();
       $xml = $this->responseToSimpleXML($response, $queryType);
+      $this->saveToFile($this->logFile, print_r($xml, true), 'INFO CLEAN XML');      
       return $xml;
     } catch (exception $e) {
       $this->saveToFile($this->logFile, "Exception in $callerFunction", 'ERROR');
@@ -500,9 +508,6 @@ class LimeWService {
   private function responseToSimpleXML($response, $type = 'query') {
     $returnXml = '';
     try {
-      $msg = 'The response is of type ' . gettype($response);
-      $this->saveToFile($this->logFile, $msg, 'DEBUG');
-
       libxml_use_internal_errors(true);
       $xml = simplexml_load_string($response);
       switch ($type) {

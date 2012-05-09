@@ -128,18 +128,26 @@ class SecuritasWS {
     }
 
     if ($fullAccess) {
+      $confirm = __("Do you want to remove the user?", 'securitas-ws');
       echo '
 <script type="text/javascript">
   function deletePerson(idperson){
-    var answer = confirm ("Do you want to remove the user?")
+    var answer = confirm ("'.$confirm.'");
     if (answer){
         jQuery.ajax({
         type: "POST",
         url: "' . $actionFile . '",
         data: "idperson=" + idperson,
-        success: function(data){         
-          //jQuery("#success").html("Delete successful");
-          window.location.reload();
+        success: function(data){
+          jQuery("#loading").hide();
+          //json array returned
+          console.log(data);
+          var resultDiv = "#result_" + idperson;
+          if(data.status == "deleted"){
+            window.location.reload();
+          } else {
+            jQuery(resultDiv).html(data.status);
+          }
         }
       });
     } else{
@@ -205,10 +213,11 @@ class SecuritasWS {
           $output .= '<input class="wpcf7-submit" type="button" value="X" onclick="deletePerson(' . $value->attributes()->idperson . ');return false;" />';
           $output .= '<input class="wpcf7-submit" type="button" value="' . __('Edit', 'securitas-ws') . '"  onclick="editPerson(' . $value->attributes()->idperson . ');return false;"/>';
           $output .= '</div>';
+          $output .= '<div id="result_'. $value->attributes()->idperson . '"></div>';
         }
         $output .= '</div>';
         $output .= '</li>';
-        $output .= '<div id="success"></div>';
+        
       }
     }
     $output .= '<ul>';
@@ -972,7 +981,25 @@ jQuery.ajaxSetup({
    * @return type 
    */
   public function deletePerson($idperson) {
-    return $this->lime->deletePerson($idperson);
+    $result = array('status' => 'Error');    
+    $success = $this->lime->deletePerson($idperson);
+    if($success){
+      global $wpdb; 
+      $wpuserid = $wpdb->get_var("select user_id from wp_usermeta where meta_key = 'sec_securitasid' and meta_value = '$idperson'");
+      clean_user_cache($wpuserid);
+      $wpdb->query( $wpdb->prepare("DELETE FROM $wpdb->usermeta WHERE user_id = %d", $wpuserid) );
+		  $wpdb->query( $wpdb->prepare("DELETE FROM $wpdb->users WHERE ID = %d", $wpuserid) );
+      //$deleted = wp_delete_user($wpuserid);   //delete user in wp
+      //if($deleted){
+        $result['status'] = 'deleted';
+      //}
+    }
+    
+    //return the result to ajax, write it as json
+    header('Cache-Control: no-cache, must-revalidate');
+    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Content-type: application/json');
+    echo json_encode($result);
   }
 
   /**
@@ -1064,12 +1091,12 @@ jQuery.ajaxSetup({
   }
 
   private function svToHtmlEntitys($m) {
-    $m = str_replace('å', '&aring;', $m);
-    $m = str_replace('ä', '&auml;', $m);
-    $m = str_replace('ö', '&ouml;', $m);
-    $m = str_replace('Å', '&Aring;', $m);
-    $m = str_replace('Ä', '&Auml;', $m);
-    $m = str_replace('Ö', '&Ouml;', $m);
+    $m = str_replace('√•', '&aring;', $m);
+    $m = str_replace('√§', '&auml;', $m);
+    $m = str_replace('√∂', '&ouml;', $m);
+    $m = str_replace('√Ö', '&Aring;', $m);
+    $m = str_replace('√Ñ', '&Auml;', $m);
+    $m = str_replace('√ñ', '&Ouml;', $m);
     return $m;
   }
 
