@@ -69,7 +69,7 @@ class SecuritasWS {
     $wpUserId = get_current_user_id();
     $secContactDate = get_user_meta($wpUserId, 'sec_contact_date', true);
     if ($secContactDate == '' || $this->isOldData($secContactDate)) {
-      $idcompany = get_user_meta($wpUserId, 'sec_idcompany', true);     
+      $idcompany = get_user_meta($wpUserId, 'sec_idcompany', true);
       $xml = $this->lime->selectFromCompany($idcompany);
       $coworkername = 'coworker.name';
       $coworkerphone = 'coworker.phone';
@@ -84,7 +84,7 @@ class SecuritasWS {
       update_user_meta($wpUserId, 'sec_contact_phone', $data['phone']);
       update_user_meta($wpUserId, 'sec_contact_email', $data['email']);
       update_user_meta($wpUserId, 'sec_contact_date', date("Y-m-d"));
-      update_user_meta($wpUserId, 'sec_installationno', $data['installationno']);      
+      update_user_meta($wpUserId, 'sec_installationno', $data['installationno']);
     } else {
       $data['name'] = get_user_meta($wpUserId, 'sec_contact_name', true);
       $data['phone'] = get_user_meta($wpUserId, 'sec_contact_phone', true);
@@ -103,7 +103,7 @@ class SecuritasWS {
     $now = time();
     $diff = $now - $sStartTime;
     //echo '$sStartDate: '. $sStartDate . ' $sStartTime: ' . $sStartTime . ' $now: '. $now . ' $diff: ' . $diff;    
-    $oneDay = 24*60*60;  //24 hours
+    $oneDay = 24 * 60 * 60;  //24 hours
     //$oneDay = 10;  //10 seconds for test only
     if ($diff > $oneDay) {
       return true;
@@ -129,30 +129,38 @@ class SecuritasWS {
 
     if ($fullAccess) {
       $confirm = __("Do you want to remove the user?", 'securitas-ws');
+      $noConnection = __("There were problems connecting to the database. Try again later.", 'securitas-ws');
       echo '<style type="text/css">
              .hide{display:none;}
             </style>';
-      
+
       echo '
 <script type="text/javascript">
-  function deletePerson(idperson){
-    var answer = confirm ("'.$confirm.'");
+  function deletePerson(idperson, lc){
+    var answer = confirm ("' . $confirm . '");
     if (answer){
       var progressDiv = "#progress_" + idperson;
       var resultDiv = "#result_" + idperson;
+      var name = jQuery("#name_" + idperson +" p").html();
+      var lastname = jQuery("#lastname_" + idperson +" p").html();
+      var email = jQuery("#email_" + idperson +" p a").html();
+      var phone = jQuery("#phone_" + idperson +" p").html();
+      
       jQuery(progressDiv).css("display", "block");    //show progress wheel
       jQuery.ajax({
         type: "POST",
         url: "' . $actionFile . '",
-        data: "idperson=" + idperson,
+        data: "idperson=" + idperson + "&lc=" + lc + "&name=" + name + "&lastname=" + lastname + "&email=" + email + "&phone=" + phone,
         success: function(data){
           jQuery(progressDiv).hide();          
           console.log(data);   //json array data returned
-          if(data.status == "deleted"){
+          if(data.lime_ended == "yes"){
             window.location.reload();
           } else {
             jQuery(progressDiv).hide();
-            jQuery(resultDiv).html(data.status);
+            //jQuery(resultDiv).html(data.status);
+            alert("'. $noConnection .'");
+            window.location.reload();  
           }
         }
       });
@@ -189,19 +197,19 @@ class SecuritasWS {
         $output .= '<li>';
         $output .= '<div class="staff-container">';
         $output .= '<div class="staff-info">';
-        $output .= '<div><strong>' . __('Name', 'securitas-ws') . '</strong>';
+        $output .= '<div id="name_' . $value->attributes()->idperson . '"><strong>' . __('Name', 'securitas-ws') . '</strong>';
         $output .= '<p>' . $value->attributes()->firstname . '</p>';
         $output .= '</div>';
-        $output .= '<div><strong>' . __('Last name', 'securitas-ws') . '</strong>';
+        $output .= '<div id="lastname_' . $value->attributes()->idperson . '"><strong>' . __('Last name', 'securitas-ws') . '</strong>';
         $output .= '<p>' . $value->attributes()->familyname . '</p>';
         $output .= '</div>';
         $output .= '<div><strong>' . __('Function', 'securitas-ws') . '</strong>';
         $output .= '<p>' . $value->attributes()->$position . '</p>';
         $output .= '</div>';
-        $output .= '<div><strong>' . __('E-mail', 'securitas-ws') . '</strong>';
+        $output .= '<div id="email_' . $value->attributes()->idperson . '"><strong>' . __('E-mail', 'securitas-ws') . '</strong>';
         $output .= '<p><a href="mailto:' . $value->attributes()->email . '">' . $value->attributes()->email . '</a></p>';
         $output .= '</div>';
-        $output .= '<div><strong>' . __('Mobile', 'securitas-ws') . '</strong>';
+        $output .= '<div id="phone_' . $value->attributes()->idperson . '"><strong>' . __('Mobile', 'securitas-ws') . '</strong>';
         $output .= '<p>' . $value->attributes()->cellphone . '</p>';
         $output .= '</div>';
         $output .= '<div><strong>' . __('Eligibility', 'securitas-ws') . '</strong>';
@@ -216,15 +224,14 @@ class SecuritasWS {
           $output .= '<div id="staff-buttons">';
           $output .= '<input type="hidden" name="idperson" id="idperson" value="' . $value->attributes()->idperson . '" />';
           $output .= '<input type="hidden" name="wpuserid" id="wpuserid" value="' . $value->attributes()->wpuserid . '">';
-          $output .= '<input class="wpcf7-submit" type="button" value="X" onclick="deletePerson(' . $value->attributes()->idperson . ');return false;" />';
+          $output .= '<input class="wpcf7-submit" type="button" value="X" onclick="deletePerson(' . $value->attributes()->idperson . ', ' . $value->attributes()->authorizedarc . ');return false;" />';
           $output .= '<input class="wpcf7-submit" type="button" value="' . __('Edit', 'securitas-ws') . '"  onclick="editPerson(' . $value->attributes()->idperson . ');return false;"/>';
           $output .= '</div>';
-          $output .= '<div id="progress_'. $value->attributes()->idperson . '"></div>';
-          $output .= '<div id="result_'. $value->attributes()->idperson . '" class="hide"><img src="' . $pluginRoot . '/img/ajax-loader.gif" alt="" ></div>';
+          $output .= '<div id="progress_' . $value->attributes()->idperson . '"></div>';
+          $output .= '<div id="result_' . $value->attributes()->idperson . '" class="hide"><img src="' . $pluginRoot . '/img/ajax-loader.gif" alt="" ></div>';
         }
         $output .= '</div>';
         $output .= '</li>';
-        
       }
     }
     $output .= '<ul>';
@@ -440,7 +447,9 @@ class SecuritasWS {
     $actionFile = $pluginRoot . "/api_lime_update_person.php";
     echo '<script type="text/javascript">
   jQuery(document).ready(function(){
-  
+      var lc_orig = jQuery("#lc:checked").val();
+      if(lc_orig === undefined){lc_orig = "0";}     
+
     //progress wheel
     jQuery("#loading")
       .hide()  // hide it initially
@@ -461,7 +470,6 @@ class SecuritasWS {
       var idperson = jQuery("#idperson").val();    
       var idcompany = jQuery("#idcompany").val(); 
       var companyname = jQuery("#companyname").val();  
-      var original_lc = jQuery("#original_lc").val();    
       var position = jQuery("#position").val(); 
       var wpuserid = jQuery("#wpuserid").val();            
 
@@ -475,7 +483,7 @@ class SecuritasWS {
       
       dataString = "firstname=" + firstname + "&familyname=" + familyname + "&cellphone=" + cellphone + "&email=" + email
                     + "&idperson=" + idperson + "&admin=" + admin + "&lc=" + lc + "&portal=" + portal + "&position=" + position
-                    + "&idcompany=" + idcompany + "&companyname=" + companyname + "&original_lc=" + original_lc + "&ended=0" + "&wpuserid=" + wpuserid;
+                    + "&idcompany=" + idcompany + "&companyname=" + companyname + "&original_lc=" + lc_orig + "&ended=0" + "&wpuserid=" + wpuserid;
       jQuery.ajax({
             type: "POST",
             url: "' . $actionFile . '",
@@ -484,6 +492,7 @@ class SecuritasWS {
             success: function(data){
                //json array returned
               console.log(data);
+              lc_orig = data.current_lc;
               jQuery("#success").html(data.status);
             }
         });
@@ -587,7 +596,6 @@ class SecuritasWS {
       $output .= '<input type="hidden" name="idperson" id="idperson" value="' . $value->attributes()->idperson . '">';
       $output .= '<input type="hidden" name="idcompany" id="idcompany" value="' . get_user_meta($userId, 'sec_idcompany', true) . '">';
       $output .= '<input type="hidden" name="companyname" id="companyname" value="' . get_user_meta($userId, 'sec_companyname', true) . '">';
-      $output .= '<input type="hidden" name="original_lc" id="original_lc" value="' . $value->attributes()->authorizedarc . '">';
       $output .= '<input type="hidden" name="wpuserid" id="wpuserid" value="' . $value->attributes()->wpuserid . '">';
       $output .= '<input type="submit" class="wpcf7-submit" id="save-person" value="' . __('Save', 'securitas-ws') . '">';
       $output .= '</div>';
@@ -677,19 +685,22 @@ jQuery.ajaxSetup({
               switch(status){              
                 case 0:
                   s = "' . $s0 . '";
+                  jQuery("#success").html(s);  
                   break;
                 case 1:
                   s = "' . $s1 . '";
+                  jQuery("#success").html(s);
+                  window.location = "/staff/";  
                   break;
                 case 2:
                   s = "' . $s2 . '";
+                  jQuery("#success").html(s);
+                  window.location = "/staff/";    
                   break;
                 default:
                   s = "error 3";
-              }
-              
-              jQuery("#success").html(s);
-              //jQuery("#success").html(data.status);
+                  jQuery("#success").html(s);
+              }              
             }
         });
 
@@ -781,40 +792,57 @@ jQuery.ajaxSetup({
    */
   public function insertPerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $original_lc, $portal, $idcompany, $companyname, $position, $ended, $wpuserid) {
     error_reporting(E_ERROR | E_PARSE);
+    $result = array('status' => 0);  //error
     $exists = $this->lime->personExists($email);
-    //print_r($exists);
     switch ($exists['idperson']) {
       case 'error':
-        $response = array('status' => 0);
+        $result['status'] = 0;
         break;
       case '0':   //add the person to the WS
         $securitasUserId = $this->lime->insertPerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $wpuserid);
         if ($securitasUserId > 0 && ($portal == 1 || $admin == 1)) {
           $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin, $securitasUserId, $cellphone);
           if (gettype($userData) == 'array') {  //the user was just created - send a welcome email   
+            $result['wp_user'] = 'created';
             $this->sendEmail('portal', $firstname, $familyname, $cellphone, $email, $lc, $portal, $userData);
+            $result['email_type_portal'] = 'sent';
             //add the wpuserid to the WebService
             $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $securitasUserId, $admin, $lc, $portal, $idcompany, $position, $ended, $userData['user_id']);
+            $result['lime_update'] = $success;
           }
         }
+        if ($lc == 1) {
+          $this->sendEmail('lc', $firstname, $familyname, $cellphone, $email, $lc, $portal, $userData);
+          $result['email_type_lc'] = 'sent';
+        }
         //$response = array('status' => __('Added successfully', 'securitas-ws'));
-        $response = array('status' => 1);
+        //$response = array('status' => 1);
+        $result['status'] = 1;
         break;
       default:
         //user exists on ws - activate her
+        $result['wp_user'] = 'exists';
         $securitasUserId = $exists['idperson'];
-        $this->lime->updateProfile($firstname, $familyname, $cellphone, $email, $securitasUserId, $position);
+        $success = $this->lime->updateProfile($firstname, $familyname, $cellphone, $email, $securitasUserId, $position);
+        $result['lime_update_1'] = $success;
         if ($securitasUserId > 0 && ($portal == 1 || $admin == 1)) {
           $userData = $this->createUser($email, $firstname, $familyname, $idcompany, $companyname, $admin, $securitasUserId, $cellphone);
           if (gettype($userData) == 'array') {  //the user was just created - send a welcome email   
             $this->sendEmail('portal', $firstname, $familyname, $cellphone, $email, $lc, $portal, $userData);
+            $result['email_type_portal'] = 'sent';
             //add the wpuserid to the WebService
             $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $securitasUserId, $admin, $lc, $portal, $idcompany, $position, $ended, $userData['user_id']);
+            $result['lime_update_2'] = $success;
           }
+        }
+        if ($lc == 1) {
+          $this->sendEmail('lc', $firstname, $familyname, $cellphone, $email, $lc, $portal, $userData);
+          $result['email_type_lc'] = 'sent';
         }
         //$response = array('status' => __('User already existed, and is now activated on portal', 'securitas-ws'));
         //$response = array('status' => 'User already existed, and is now activated on portal');
-        $response = array('status' => 2);
+        //$response = array('status' => 2);
+        $result['status'] = 2;
         break;
     }
 
@@ -822,7 +850,7 @@ jQuery.ajaxSetup({
     header('Cache-Control: no-cache, must-revalidate');
     header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
     header('Content-type: application/json');
-    echo json_encode($response);
+    echo json_encode($result);
   }
 
   /**
@@ -919,6 +947,7 @@ jQuery.ajaxSetup({
     $success = $this->lime->updatePerson($firstname, $familyname, $cellphone, $email, $idperson, $admin, $lc, $portal, $idcompany, $position, $ended, $wpuserid);
     if ($success) {
       $result['WSUser'] = 'updated';
+      $result['current_lc'] = $lc;
 
       $wpUserUpdated = false;
       $wpUserId = $wpuserid;
@@ -987,21 +1016,31 @@ jQuery.ajaxSetup({
    * @param type $idperson
    * @return type 
    */
-  public function deletePerson($idperson) {
-    $result = array('status' => 'Error');    
+  public function deletePerson($idperson, $lc, $firstname, $familyname, $email, $cellphone) {
+    $result = array('status' => 'Error');
+    $result['wp_deleted'] = 'no';
+    $result['lime_ended'] = 'no';
+    $result['lc access'] = $lc;
+    $result['email_type_delete_person_lc'] = 'no';
     $success = $this->lime->deletePerson($idperson);
-    if($success){
-      global $wpdb; 
-      $wpuserid = $wpdb->get_var("select user_id from wp_usermeta where meta_key = 'sec_securitasid' and meta_value = '$idperson'");
-      clean_user_cache($wpuserid);
-      $wpdb->query( $wpdb->prepare("DELETE FROM $wpdb->usermeta WHERE user_id = %d", $wpuserid) );
-		  $wpdb->query( $wpdb->prepare("DELETE FROM $wpdb->users WHERE ID = %d", $wpuserid) );
-      //$deleted = wp_delete_user($wpuserid);   //delete user in wp
-      //if($deleted){
-        $result['status'] = 'deleted';
-      //}
+    if ($success) {
+      $result['lime_ended'] = 'yes';
+      if ($lc == 1) {
+        $this->sendEmail('delete_person_lc', $firstname, $familyname, $cellphone, $email, $lc, null);
+        $result['email_type_delete_person_lc'] = 'sent';
+      }
+      global $wpdb;
+      $sql = "select user_id  from wp_usermeta where meta_key = 'sec_securitasid' and meta_value = '$idperson'";
+      $wpuserid = $wpdb->get_var($sql);
+      if (is_numeric($wpuserid) && $wpuserid > 0) {
+        clean_user_cache($wpuserid);
+        $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->usermeta WHERE user_id = %d", $wpuserid));
+        $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->users WHERE ID = %d", $wpuserid));
+        $result['wp_deleted'] = 'yes';
+        $result['status'] = 'ok';
+      }
     }
-    
+    $this->saveToFile($this->logFile, "DeletePerson, ajax result array - $idperson \n " . print_r($result, true), 'INFO');
     //return the result to ajax, write it as json
     header('Cache-Control: no-cache, must-revalidate');
     header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
@@ -1026,6 +1065,23 @@ jQuery.ajaxSetup({
     $sec_installationno = get_user_meta($user_id, 'sec_installationno', true);
 
     switch ($type) {
+      case 'delete_person_lc':
+        $subject = __("Person deleted with LC eligibility", 'securitas-ws');
+        $message = __("Person deleted with LC eligibility for", 'securitas-ws') . ": <br><br>";
+        $message .= __("Company", 'securitas-ws') . ": $user_company <br>";
+        $message .= __("Name", 'securitas-ws') . ": $firstname $familyname <br>";
+        $message .= __("Email", 'securitas-ws') . ": $email <br>";
+        $message .= __("Mobile", 'securitas-ws') . ": $cellphone <br><br><br>";
+        $message .= __("The person who did this change is", 'securitas-ws') . ": <br><br>";
+        $message .= __("Company", 'securitas-ws') . ": $user_company <br>";
+        $message .= __("Installation number", 'securitas-ws') . ": $sec_installationno <br>";
+        $message .= __("Name", 'securitas-ws') . ": $user_firstname $user_lastname <br>";
+        $message .= __("Email", 'securitas-ws') . ": $user_email <br>";
+
+
+        $to = get_option('sec_support_email'); //'kundtjanst.alert@securitas.se';
+        $from = get_option('sec_support_email_sender');
+        break;
       case 'lc':
         $lcAcess = __('NO ACCESS', 'securitas-ws');
         if ($lc == '1') {
@@ -1040,7 +1096,7 @@ jQuery.ajaxSetup({
         $message .= __("Mobile", 'securitas-ws') . ": $cellphone <br><br><br>";
         $message .= __("The person who did this change is", 'securitas-ws') . ": <br><br>";
         $message .= __("Company", 'securitas-ws') . ": $user_company <br>";
-        $message .= __("Installation number", 'securitas-ws') . ": $sec_installationno <br>";        
+        $message .= __("Installation number", 'securitas-ws') . ": $sec_installationno <br>";
         $message .= __("Name", 'securitas-ws') . ": $user_firstname $user_lastname <br>";
         $message .= __("Email", 'securitas-ws') . ": $user_email <br>";
 
@@ -1073,7 +1129,7 @@ jQuery.ajaxSetup({
         $from = get_option('sec_support_email_sender');
         break;
       default:
-        $this->saveToFile($this->logFile, 'Error sending email, 1', 'ERROR');
+        $this->saveToFile($this->logFile, 'Error sending email, 1, type = ' . $type, 'ERROR');
         return;
         break;
     }
@@ -1098,12 +1154,12 @@ jQuery.ajaxSetup({
   }
 
   private function svToHtmlEntitys($m) {
-    $m = str_replace('√•', '&aring;', $m);
-    $m = str_replace('√§', '&auml;', $m);
-    $m = str_replace('√∂', '&ouml;', $m);
-    $m = str_replace('√Ö', '&Aring;', $m);
-    $m = str_replace('√Ñ', '&Auml;', $m);
-    $m = str_replace('√ñ', '&Ouml;', $m);
+    $m = str_replace('‚àö‚Ä¢', '&aring;', $m);
+    $m = str_replace('‚àö¬ß', '&auml;', $m);
+    $m = str_replace('‚àö‚àÇ', '&ouml;', $m);
+    $m = str_replace('‚àö√ñ', '&Aring;', $m);
+    $m = str_replace('‚àö√ë', '&Auml;', $m);
+    $m = str_replace('‚àö√±', '&Ouml;', $m);
     return $m;
   }
 

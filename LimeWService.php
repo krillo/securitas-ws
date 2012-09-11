@@ -359,7 +359,7 @@ class LimeWService {
    * @return boolean 
    */
   public function personExists($email) {
-    $data = array('idperson' => '0');
+    $data = array('idperson' => '0');  //does not exist
     if (isset($email)) {
       $params = array('query' =>
           '<query distinct="0" top="1">
